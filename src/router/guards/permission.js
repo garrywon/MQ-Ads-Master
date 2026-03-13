@@ -1,0 +1,94 @@
+import NProgress from "@/plugins/nprogress";
+import router from "@/router";
+import { usePermissionStore, useUserStore } from "@/store";
+import { useTenantStoreHook } from "@/store/modules/tenant";
+import { appConfig } from "@/settings";
+
+/**
+ * 路由权限守卫
+ *
+ * 处理登录验证、动态路由生成、404检测等
+ */
+export function setupPermissionGuard() {
+  const whiteList = ["/login"];
+
+  router.beforeEach(async (to, from) => {
+    NProgress.start();
+
+    try {
+      const isLoggedIn = useUserStore().isLoggedIn();
+
+      // 未登录处理
+      if (!isLoggedIn) {
+        if (whiteList.includes(to.path)) {
+          return;
+        } else {
+          NProgress.done();
+          return `/login?redirect=${encodeURIComponent(to.fullPath)}`;
+        }
+      }
+
+      // 已登录访问登录页，重定向到首页
+      if (to.path === "/login") {
+        return { path: "/" };
+      }
+
+      const permissionStore = usePermissionStore();
+      const userStore = useUserStore();
+
+      // 动态路由生成
+      if (!permissionStore.isRouteGenerated) {
+        if (!userStore.userInfo?.roles?.length) {
+          await userStore.getUserInfo();
+        }
+
+        // 加载用户租户列表（VITE_APP_TENANT_ENABLED=true 时生效）
+        await initTenantContext();
+
+        const dynamicRoutes = await permissionStore.generateRoutes();
+        dynamicRoutes.forEach((route) => {
+          router.addRoute(route);
+        });
+
+        return { ...to, replace: true };
+      }
+
+      // 路由 404 检查
+      if (to.matched.length === 0) {
+        return "/404";
+      }
+
+      // 动态标题
+      const title = to.params.title || to.query.title;
+      if (title) {
+        to.meta.title = title;
+      }
+
+      return;
+    } catch (error) {
+      console.error("Route guard error:", error);
+      await useUserStore().resetAllState();
+      NProgress.done();
+      return "/login";
+    }
+  });
+
+  router.afterEach(() => {
+    NProgress.done();
+  });
+}
+
+// ============================================
+// 多租户支持（可选）
+// ============================================
+
+/** 初始化多租户上下文，未启用或失败时静默跳过 */
+async function initTenantContext() {
+  if (!appConfig.tenantEnabled) return;
+
+  try {
+    await useTenantStoreHook().loadTenant();
+  } catch {
+    // 静默失败，不影响主流程
+  }
+}
