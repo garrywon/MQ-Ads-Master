@@ -182,6 +182,32 @@ const MiAdsAPI = {
   },
 
   /**
+   * 获取投放国家/地区列表
+   */
+  getCreateRegionsList() {
+    return request({
+      url: `${MIADS_BASE_URL}/create/regions/list`,
+      method: "get",
+    });
+  },
+
+  /**
+   * 获取媒体/版位列表
+   * @param {number[]} campaignIds - 计划ID列表
+   * @param {number} displayType - 版位类型 (1=信息流, 2=图标, 3=开屏, 6=banner, 7=插屏, 8=激励视频, 9=PUSH, 12=锁屏画报, 13=通投智选)
+   */
+  getCreateMediaList(campaignIds, displayType = 13) {
+    return request({
+      url: `${MIADS_BASE_URL}/create/media/list`,
+      method: "post",
+      data: {
+        campaign_ids: campaignIds,
+        display_type: displayType,
+      },
+    });
+  },
+
+  /**
    * 创建广告创意
    * @param {Object} data
    * @param {number} data.account_id - 广告账户ID
@@ -293,6 +319,93 @@ const MiAdsAPI = {
       }));
     });
   },
-};
 
+  /**
+   * 根据广告ID列表查询广告状态
+   * @param {number} businessType - 业务类型：1=广告计划, 2=广告组, 3=广告创意
+   * @param {number[]} ids - 广告ID列表
+   */
+  queryAdStatus(businessType, ids) {
+    return request({
+      url: `${MIADS_BASE_URL}/query/ads/by-ids`,
+      method: "post",
+      data: {
+        business_type: businessType,
+        ids: ids,
+      },
+    });
+  },
+
+  /**
+   * 更新广告计划状态
+   * @param {string} campaignId - 计划ID
+   * @param {boolean} status - 状态：true=投放中，false=未投放
+   * @param {number} accountId - 账户ID
+   */
+  updateCampaignStatus(campaignId, status, accountId) {
+    return request({
+      url: `${MIADS_BASE_URL}/update/campaigns/status`,
+      method: "post",
+      data: {
+        campaign_id: campaignId,
+        status: status,
+        account_id: accountId,
+      },
+    });
+  },
+
+  /**
+   * 更新广告组状态
+   * @param {string} groupId - 组ID
+   * @param {boolean} status - 状态：true=投放中，false=未投放
+   * @param {number} accountId - 账户ID
+   */
+  updateGroupStatus(groupId, status, accountId) {
+    return request({
+      url: `${MIADS_BASE_URL}/update/groups/status`,
+      method: "post",
+      data: {
+        group_id: groupId,
+        status: status,
+        account_id: accountId,
+      },
+    });
+  },
+
+  /**
+   * 更新广告创意状态
+   * @param {string} creativeId - 创意ID
+   * @param {boolean} status - 状态：true=投放中，false=未投放
+   * @param {number} accountId - 账户ID
+   */
+  updateCreativeStatus(creativeId, status, accountId) {
+    return request({
+      url: `${MIADS_BASE_URL}/update/creatives/status`,
+      method: "post",
+      data: {
+        creative_id: creativeId,
+        status: status,
+        account_id: accountId,
+      },
+    });
+  },
+
+  /**
+   * 更新广告计划日预算
+   * @param {string} campaignId - 计划ID
+   * @param {number} budget - 预算值（USD × 100000），0表示不限
+   * @param {number} accountId - 账户ID
+   */
+  updateCampaignBudget(campaignId, budget, accountId) {
+    return request({
+      url: `${MIADS_BASE_URL}/update/campaigns/budget`,
+      method: "post",
+      data: {
+        campaign_id: campaignId,
+        budget: budget,
+        account_id: accountId,
+      },
+    });
+  },
+};
 export default MiAdsAPI;

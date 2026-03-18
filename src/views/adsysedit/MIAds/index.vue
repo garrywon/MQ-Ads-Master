@@ -10,7 +10,10 @@
             placeholder="选择账户"
             @change="handleAccountChange"
             :disabled="accountLoading"
-            style="width: 180px"
+            filterable
+            allow-create
+            default-first-option
+            style="width: 110px"
           >
             <el-option
               v-for="opt in currentAccountOptions"
@@ -23,62 +26,115 @@
 
         <!-- 计划层级特有筛选 -->
         <template v-if="activeTab === 'campaign'">
-          <el-form-item label="计划ID">
+          <el-form-item label="计划">
             <el-select
-              v-model="currentSearchForm.campaignIds"
-              placeholder="计划ID"
+              v-model="sharedCampaignFilter.searchType"
+              placeholder="选择类型"
+              style="width: 100px; margin-right: 8px"
+              @change="handleCampaignSearchTypeChange"
+            >
+              <el-option label="按ID" value="id" />
+              <el-option label="按名称" value="name" />
+            </el-select>
+            <el-select
+              v-if="sharedCampaignFilter.searchType === 'id'"
+              v-model="sharedCampaignFilter.campaignIds"
+              placeholder="选择计划ID"
               multiple
               filterable
               collapse-tags
               collapse-tags-tooltip
               :options="currentCampaignIdOptions"
               style="width: 180px"
-            />
-          </el-form-item>
-          <el-form-item label="计划名称">
-            <el-input
-              v-model="currentSearchForm.campaignName"
-              placeholder="输入名称"
               clearable
-              style="width: 200px"
-              @keyup.enter="handleAutoQuery"
+            />
+            <el-select
+              v-else
+              v-model="sharedCampaignFilter.campaignNames"
+              placeholder="选择计划名称"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              :options="currentCampaignNameOptions"
+              style="width: 180px"
+              clearable
             />
           </el-form-item>
         </template>
 
         <!-- 组层级特有筛选 -->
         <template v-if="activeTab === 'group'">
-          <el-form-item label="计划ID">
+          <el-form-item label="计划">
             <el-select
-              v-model="currentSearchForm.campaignIds"
-              placeholder="计划ID"
+              v-model="sharedCampaignFilter.searchType"
+              placeholder="选择类型"
+              style="width: 100px; margin-right: 8px"
+              @change="handleCampaignSearchTypeChange"
+            >
+              <el-option label="按ID" value="id" />
+              <el-option label="按名称" value="name" />
+            </el-select>
+            <el-select
+              v-if="sharedCampaignFilter.searchType === 'id'"
+              v-model="sharedCampaignFilter.campaignIds"
+              placeholder="选择计划ID"
               multiple
               filterable
               collapse-tags
               collapse-tags-tooltip
               :options="currentGroupCampaignIdOptions"
               style="width: 180px"
+              clearable
+              @change="handleGroupCampaignChange"
+            />
+            <el-select
+              v-else
+              v-model="sharedCampaignFilter.campaignNames"
+              placeholder="选择计划名称"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              :options="currentGroupCampaignNameOptions"
+              style="width: 180px"
+              clearable
+              @change="handleGroupCampaignChange"
             />
           </el-form-item>
-          <el-form-item label="组ID">
+          <el-form-item label="组">
             <el-select
-              v-model="currentSearchForm.groupIds"
-              placeholder="组ID"
+              v-model="sharedGroupFilter.searchType"
+              placeholder="选择类型"
+              style="width: 100px; margin-right: 8px"
+              @change="handleGroupSearchTypeChange"
+            >
+              <el-option label="按ID" value="id" />
+              <el-option label="按名称" value="name" />
+            </el-select>
+            <el-select
+              v-if="sharedGroupFilter.searchType === 'id'"
+              v-model="sharedGroupFilter.groupIds"
+              placeholder="选择组ID"
               multiple
               filterable
               collapse-tags
               collapse-tags-tooltip
               :options="currentGroupIdOptions"
               style="width: 180px"
-            />
-          </el-form-item>
-          <el-form-item label="组名称">
-            <el-input
-              v-model="currentSearchForm.groupName"
-              placeholder="输入组名"
               clearable
-              style="width: 200px"
-              @keyup.enter="handleAutoQuery"
+            />
+            <el-select
+              v-else
+              v-model="sharedGroupFilter.groupNames"
+              placeholder="选择组名称"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              :options="currentGroupGroupNameOptions"
+              style="width: 180px"
+              clearable
             />
           </el-form-item>
         </template>
@@ -87,51 +143,111 @@
         <template v-if="activeTab === 'creative'">
           <el-form-item label="计划">
             <el-select
-              v-model="currentSearchForm.campaignId"
-              placeholder="选择计划"
-              filterable
-              @change="handleCreativeCampaignChange"
-              style="width: 180px"
+              v-model="sharedCampaignFilter.searchType"
+              placeholder="选择类型"
+              style="width: 100px; margin-right: 8px"
+              @change="handleCampaignSearchTypeChange"
             >
-              <el-option
-                v-for="opt in creativeCampaignOptions"
-                :key="opt.value"
-                :value="opt.value"
-                :label="opt.label"
-              />
+              <el-option label="按ID" value="id" />
+              <el-option label="按名称" value="name" />
             </el-select>
-          </el-form-item>
-          <el-form-item label="组">
             <el-select
-              v-model="currentSearchForm.groupIds"
-              placeholder="选择组"
+              v-if="sharedCampaignFilter.searchType === 'id'"
+              v-model="sharedCampaignFilter.campaignIds"
+              placeholder="选择计划ID"
               multiple
               filterable
               collapse-tags
               collapse-tags-tooltip
-              :options="creativeGroupOptions"
+              :options="creativeCampaignIdOptions"
               style="width: 180px"
+              clearable
+              @change="handleCreativeCampaignChange"
+            />
+            <el-select
+              v-else
+              v-model="sharedCampaignFilter.campaignNames"
+              placeholder="选择计划名称"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              :options="creativeCampaignNameOptions"
+              style="width: 180px"
+              clearable
+              @change="handleCreativeCampaignChange"
             />
           </el-form-item>
-          <el-form-item label="创意ID">
+          <el-form-item label="组">
             <el-select
-              v-model="currentSearchForm.creativeIds"
-              placeholder="创意ID"
+              v-model="sharedGroupFilter.searchType"
+              placeholder="选择类型"
+              style="width: 100px; margin-right: 8px"
+              @change="handleGroupSearchTypeChange"
+            >
+              <el-option label="按ID" value="id" />
+              <el-option label="按名称" value="name" />
+            </el-select>
+            <el-select
+              v-if="sharedGroupFilter.searchType === 'id'"
+              v-model="sharedGroupFilter.groupIds"
+              placeholder="选择组ID"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              :options="creativeGroupIdOptions"
+              style="width: 180px"
+              clearable
+              @change="handleCreativeGroupChange"
+            />
+            <el-select
+              v-else
+              v-model="sharedGroupFilter.groupNames"
+              placeholder="选择组名称"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              :options="creativeGroupNameOptions"
+              style="width: 180px"
+              clearable
+              @change="handleCreativeGroupChange"
+            />
+          </el-form-item>
+          <el-form-item label="创意">
+            <el-select
+              v-model="sharedCreativeFilter.searchType"
+              placeholder="选择类型"
+              style="width: 100px; margin-right: 8px"
+              @change="handleCreativeSearchTypeChange"
+            >
+              <el-option label="按ID" value="id" />
+              <el-option label="按名称" value="name" />
+            </el-select>
+            <el-select
+              v-if="sharedCreativeFilter.searchType === 'id'"
+              v-model="sharedCreativeFilter.creativeIds"
+              placeholder="选择创意ID"
               multiple
               filterable
               collapse-tags
               collapse-tags-tooltip
               :options="currentCreativeIdOptions"
               style="width: 180px"
-            />
-          </el-form-item>
-          <el-form-item label="创意名称">
-            <el-input
-              v-model="currentSearchForm.creativeName"
-              placeholder="输入创意名"
               clearable
-              style="width: 200px"
-              @keyup.enter="handleAutoQuery"
+            />
+            <el-select
+              v-else
+              v-model="sharedCreativeFilter.creativeNames"
+              placeholder="选择创意名称"
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              :options="currentCreativeNameOptions"
+              style="width: 180px"
+              clearable
             />
           </el-form-item>
         </template>
@@ -157,103 +273,49 @@
       </el-form>
     </div>
 
-    
-
-    <!-- 表格区 -->
-    <div class="table-container">
-      <!-- 选项卡导航 -->
-    <div class="tab-navigation">
-      <el-tabs v-model="activeTab" type="card" @tab-change="handleTabChange">
-        <el-tab-pane v-for="tab in tabs" :key="tab.value" :label="tab.label" :name="tab.value" />
-      </el-tabs>
-    </div>
-      <!-- 添加按钮 -->
-      <div class="function-bar">
-        <div class="function-bar-content">
-          <el-button type="primary" @click="handleAdd">
-            <el-icon><Plus /></el-icon>
-            添加{{ activeTab === "campaign" ? "计划" : activeTab === "group" ? "广告组" : "创意" }}
-          </el-button>
-        </div>
-      </div>
-      <el-table
-        v-loading="currentLoading"
-        :data="currentTableData"
-        :border="false"
-        :highlight-current-row="false"
-        height="calc(100vh - 300px)"
-        show-summary
-        :summary-method="getSummaries"
-        @sort-change="handleSortChange"
-      >
-        <!-- 动态列 -->
-        <el-table-column
-          v-for="col in tableColumns"
-          :key="col.prop"
-          :prop="col.prop"
-          :label="col.label"
-          :width="col.width"
-          :min-width="col.minWidth"
-          :sortable="col.sortable"
-          :align="col.align"
-          :fixed="col.fixed"
-        >
-          <!-- 营销方式列 -->
-          <template v-if="col.prop === 'campaignType'" #default="{ row }">
-            {{ getTypeLabel(row.campaignType) }}
-          </template>
-
-          <!-- 状态列 -->
-          <template v-else-if="col.prop === 'status'" #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">{{ getStatusLabel(row.status) }}</el-tag>
-          </template>
-
-          <!-- 操作列 -->
-          <template v-else-if="col.prop === 'operation'" #default="{ row }">
-            <div class="action-buttons">
-              <el-button class="action-btn action-btn-edit" size="small" @click="handleEdit(row)">
-                <el-icon><Edit /></el-icon>
-                <span>编辑</span>
-              </el-button>
-              <el-button
-                class="action-btn action-btn-delete"
-                size="small"
-                @click="handleDelete(row)"
-              >
-                <el-icon><Delete /></el-icon>
-                <span>删除</span>
-              </el-button>
-            </div>
-          </template>
-        </el-table-column>
-      </el-table>
-
-      <!-- 分页 -->
-      <div class="mt-4 flex justify-center">
-        <el-pagination
-          v-model:current-page="currentPagination.currentPage"
-          v-model:page-size="currentPagination.pageSize"
-          :page-sizes="currentPagination.pageSizes"
-          :total="currentPagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="(val) => handleSizeChange(val, activeTab)"
-          @current-change="(val) => handleCurrentChange(val, activeTab)"
-        />
-      </div>
-    </div>
+    <!-- 表格组件 -->
+    <MIAdsTable
+      v-model:active-tab="activeTab"
+      :data="currentTableData"
+      :loading="currentLoading"
+      :pagination="currentPagination"
+      :columns="tableColumns"
+      :tabs="tabs"
+      :account-options="accountOptionsShared"
+      :campaign-options="currentGroupCampaignIdOptions"
+      :current-account-id="currentSearchForm.accountId"
+      :editing-row-id="currentEditingRowId"
+      @tab-change="handleTabChange"
+      @add-click="handleAdd"
+      @sort-change="handleSortChange"
+      @page-change="handleCurrentChange"
+      @size-change="handleSizeChange"
+      @status-change="handleStatusChange"
+      @edit="handleEdit"
+      @delete="handleDelete"
+      @budget-edit-start="handleBudgetEditStart"
+      @budget-edit-cancel="handleBudgetEditCancel"
+      @budget-submit="handleBudgetSubmit"
+      @campaign-added="handleCampaignAdded"
+      @group-added="handleGroupAdded"
+      @name-click="(payload) => handleNameClick(payload.col, payload.row)"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, h, computed } from "vue";
-import { Plus, Edit, Delete } from "@element-plus/icons-vue";
+import { ref, reactive, onMounted, onUnmounted, computed } from "vue";
 import { ElMessage } from "element-plus";
 import MiAdsAPI from "@/api/miads";
+import MIAdsTable from "@/components/Xiaomiads/MIAdsTable.vue";
 
 // ==================== 状态定义 ====================
 
 // 当前激活的选项卡
 const activeTab = ref("campaign"); // 'campaign' | 'group' | 'creative'
+
+// 预算编辑 - 唯一编辑行控制
+const currentEditingRowId = ref(null);
 
 // 账户数据加载状态
 const accountLoading = ref(false);
@@ -264,6 +326,27 @@ const currentAccountId = ref(null);
 
 // 共享的账户选项（三个选项卡共用）
 const accountOptionsShared = ref([]);
+
+// 共享的计划筛选状态（三个维度共用）
+const sharedCampaignFilter = reactive({
+  searchType: "id",
+  campaignIds: [],
+  campaignNames: [],
+});
+
+// 共享的组筛选状态（group和creative维度共用）
+const sharedGroupFilter = reactive({
+  searchType: "id",
+  groupIds: [],
+  groupNames: [],
+});
+
+// 共享的创意筛选状态（仅creative维度使用）
+const sharedCreativeFilter = reactive({
+  searchType: "id",
+  creativeIds: [],
+  creativeNames: [],
+});
 
 // 选项卡配置
 const tabs = [
@@ -278,6 +361,17 @@ const marketingTypeOptions = [
   { label: "H5", value: "2" },
   { label: "再营销", value: "3" },
 ];
+
+// 出价类型选项
+const billingTypeOptions = [
+  { label: "CPA", value: "11" },
+  { label: "CPC", value: "2" },
+];
+
+const getBillingTypeLabel = (type) => {
+  const opt = billingTypeOptions.find((o) => o.value === String(type));
+  return opt ? opt.label : "-";
+};
 
 // 排序状态（共享）
 const sortState = reactive({
@@ -300,8 +394,6 @@ const tabStates = reactive({
     }),
     searchForm: reactive({
       accountId: null,
-      campaignIds: [],
-      campaignName: "",
       status: null,
     }),
     accountOptions: ref([]),
@@ -321,9 +413,6 @@ const tabStates = reactive({
     }),
     searchForm: reactive({
       accountId: null,
-      campaignIds: [],
-      groupIds: [],
-      groupName: "",
       status: null,
     }),
     accountOptions: ref([]),
@@ -344,10 +433,6 @@ const tabStates = reactive({
     }),
     searchForm: reactive({
       accountId: null,
-      campaignId: null,
-      groupIds: [],
-      creativeIds: [],
-      creativeName: "",
       status: null,
     }),
     accountOptions: ref([]),
@@ -361,19 +446,37 @@ const tabStates = reactive({
 // ==================== 计算属性 ====================
 
 const currentTabState = computed(() => tabStates[activeTab.value]);
-const currentTableData = computed(() => currentTabState.value.tableData);
+const currentTableData = computed(() => {
+  const rawData = currentTabState.value.tableData;
+  if (activeTab.value === "group") {
+    return rawData.map((record) => ({
+      ...record,
+      billingTypeLabel: record.billingType === 11 ? "CPA" : record.billingType === 2 ? "CPC" : "-",
+      productTypeLabel: record.productType === 1 ? "GA" : record.productType === 2 ? "GP" : "-",
+    }));
+  }
+  return rawData;
+});
 const currentLoading = computed(() => currentTabState.value.loading);
 const currentPagination = computed(() => currentTabState.value.pagination);
 const currentSearchForm = computed(() => currentTabState.value.searchForm);
 
 const currentAccountOptions = computed(() => currentTabState.value.accountOptions);
 const currentCampaignIdOptions = computed(() => tabStates.campaign.campaignIdOptions);
+const currentCampaignNameOptions = computed(() => tabStates.campaign.campaignOptions);
 const currentGroupCampaignIdOptions = computed(() => tabStates.group.campaignIdOptions);
+const currentGroupCampaignNameOptions = computed(() => tabStates.group.groupOptions);
 const currentGroupIdOptions = computed(() => tabStates.group.groupIdOptions);
+const currentGroupGroupNameOptions = computed(() => tabStates.group.groupOptions);
 const currentCreativeIdOptions = computed(() => tabStates.creative.creativeIdOptions);
+const currentCreativeNameOptions = computed(() => tabStates.creative.creativeOptions);
+const creativeCampaignIdOptions = computed(() => tabStates.creative.campaignIdOptions);
+const creativeCampaignNameOptions = computed(() => tabStates.creative.campaignNameOptions);
+const creativeGroupIdOptions = computed(() => tabStates.creative.groupIdOptions);
+const creativeGroupNameOptions = computed(() => tabStates.creative.groupNameOptions);
 
-const creativeCampaignOptions = computed(() => tabStates.creative.campaignOptions);
-const creativeGroupOptions = computed(() => tabStates.creative.groupOptions);
+const creativeCampaignOptions = computed(() => tabStates.creative.campaignIdOptions);
+const creativeGroupOptions = computed(() => tabStates.creative.groupIdOptions);
 
 // 动态表格列配置
 const tableColumns = computed(() => {
@@ -387,45 +490,108 @@ const tableColumns = computed(() => {
       fixed: "left",
     },
     { prop: "name", label: "名称", minWidth: 150, sortable: true, align: "center" },
-    { prop: "campaignId", label: "计划ID", minWidth: 100, sortable: true, align: "center" },
-    { prop: "status", label: "状态", minWidth: 80, sortable: true, align: "center" },
+    { prop: "campaignId", label: "计划ID", minWidth: 140, sortable: true, align: "center" },
+    { prop: "status", label: "状态", minWidth: 100, sortable: true, align: "center" },
   ];
 
   if (activeTab.value === "campaign") {
     return [
       baseColumns[0], // accountId
-      { prop: "name", label: "计划名称", minWidth: 180, sortable: true, align: "center" },
+      {
+        prop: "name",
+        label: "计划名称",
+        minWidth: 180,
+        sortable: true,
+        align: "center",
+        clickable: true,
+        targetTab: "group",
+      },
       baseColumns[2], // campaignId
-      { prop: "campaignType", label: "营销方式", minWidth: 100, sortable: true, align: "center" },
-      { prop: "dayBudget", label: "日预算", minWidth: 100, sortable: true, align: "right" },
+      { prop: "campaignType", label: "营销方式", minWidth: 140, sortable: true, align: "center" },
+      { prop: "dayBudget", label: "日预算", minWidth: 140, sortable: true, align: "center" },
       baseColumns[3], // status
-      { prop: "operation", label: "操作", minWidth: 100, fixed: "right", align: "center" },
+      { prop: "operation", label: "操作", minWidth: 140, fixed: "right", align: "center" },
     ];
   }
 
   if (activeTab.value === "group") {
     return [
       baseColumns[0], // accountId
-      { prop: "groupId", label: "广告组ID", minWidth: 100, sortable: true, align: "center" },
-      { prop: "name", label: "组名称", minWidth: 180, sortable: true, align: "center" },
+      {
+        prop: "name",
+        label: "组名称",
+        minWidth: 220,
+        sortable: true,
+        align: "center",
+        clickable: true,
+        targetTab: "creative",
+      },
+      { prop: "groupId", label: "广告组ID", minWidth: 140, sortable: true, align: "center" },
+      {
+        prop: "campaignName",
+        label: "计划名称",
+        minWidth: 200,
+        sortable: true,
+        align: "center",
+        clickable: true,
+        targetTab: "campaign",
+      },
       baseColumns[2], // campaignId
-      { prop: "campaignType", label: "营销方式", minWidth: 100, sortable: true, align: "center" },
-      { prop: "dayBudget", label: "日预算", minWidth: 100, sortable: true, align: "right" },
+      { prop: "dayBudget", label: "日预算", minWidth: 140, sortable: true, align: "center" },
+      { prop: "bid", label: "出价(美元)", minWidth: 140, sortable: true, align: "center" },
+      {
+        prop: "targetROI",
+        label: "目标ROI",
+        minWidth: 120,
+        sortable: true,
+        align: "center",
+      },
+      {
+        prop: "purchaseMethod",
+        label: "买量方式",
+        minWidth: 100,
+        sortable: true,
+        align: "center",
+      },
+      { prop: "packageName", label: "包名", minWidth: 180, sortable: true, align: "center" },
       baseColumns[3], // status
-      { prop: "operation", label: "操作", minWidth: 100, fixed: "right", align: "center" },
+      { prop: "operation", label: "操作", minWidth: 140, fixed: "right", align: "center" },
     ];
   }
 
   if (activeTab.value === "creative") {
     return [
       baseColumns[0], // accountId
-      { prop: "creativeId", label: "广告创意ID", minWidth: 100, sortable: true, align: "center" },
-      { prop: "name", label: "创意名称", minWidth: 180, sortable: true, align: "center" },
+      {
+        prop: "name",
+        label: "创意名称",
+        minWidth: 180,
+        sortable: true,
+        align: "center",
+      },
+      { prop: "creativeId", label: "广告创意ID", minWidth: 140, sortable: true, align: "center" },
+      {
+        prop: "campaignName",
+        label: "计划名称",
+        minWidth: 180,
+        sortable: true,
+        align: "center",
+        clickable: true,
+        targetTab: "campaign",
+      },
       baseColumns[2], // campaignId
-      { prop: "groupName", label: "组名称", minWidth: 150, sortable: true, align: "center" },
-      { prop: "groupId", label: "组ID", minWidth: 100, sortable: true, align: "center" },
+      {
+        prop: "groupName",
+        label: "组名称",
+        minWidth: 200,
+        sortable: true,
+        align: "center",
+        clickable: true,
+        targetTab: "group",
+      },
+      { prop: "groupId", label: "组ID", minWidth: 140, sortable: true, align: "center" },
       baseColumns[3], // status
-      { prop: "operation", label: "操作", minWidth: 100, fixed: "right", align: "center" },
+      { prop: "operation", label: "操作", minWidth: 140, fixed: "right", align: "center" },
     ];
   }
 
@@ -446,8 +612,16 @@ const formatBudget = (val) => {
   return (Number(val) / 100000).toFixed(3).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 };
 
+const formatDayBudget = (val) => {
+  // 当日预算为0时，显示为"不限"
+  if (val === 0) return "不限";
+  return formatBudget(val);
+};
+
 const getStatusLabel = (status) => {
-  return status === 0 ? "投放中" : status === 1 ? "已暂停" : "未知";
+  if (status === 0) return "投放中";
+  if (status === 1) return "未投放";
+  return "未知";
 };
 
 const getStatusType = (status) => {
@@ -457,6 +631,19 @@ const getStatusType = (status) => {
 const getTypeLabel = (type) => {
   const opt = marketingTypeOptions.find((o) => o.value === String(type));
   return opt ? opt.label : "-";
+};
+
+const getPurchaseMethodLabel = (billingType, optimizeGoal = null) => {
+  // 当 optimizeGoal=4 且 billingType=2 时，显示 ROAS
+  if (optimizeGoal === 4 && billingType === 2) {
+    return "ROAS";
+  }
+  // 当 optimizeGoal=1 且 billingType=2 时，显示 OCPC
+  if (optimizeGoal === 1 && billingType === 2) {
+    return "OCPC";
+  }
+  // 否则显示 billingType 对应的标签
+  return getBillingTypeLabel(billingType);
 };
 
 const buildNameToIdMap = (dataArray) => {
@@ -488,6 +675,7 @@ const convertResponseData = (records, type) => {
         accountId: item.accountId,
         name: item.name,
         status: item.status,
+        unDeliveryReason: item.unDeliveryReason || [],
         createTime: item.createTime,
         updateTime: item.updateTime,
       };
@@ -496,28 +684,53 @@ const convertResponseData = (records, type) => {
         return {
           ...base,
           campaignId: item.campaignId,
-          dayBudget: formatBudget(item.dayBudget),
+          dayBudget: formatDayBudget(item.dayBudget),
           campaignType: item.campaignType,
+          statusUpdating: false,
         };
       } else if (type === "group") {
+        // 从 campaignBasic 推导 campaignName
+        const campaignBasic = tabStates.campaign.allBasicData;
+        const campaign = campaignBasic.find((c) => String(c.value) === String(item.campaignId));
+        const campaignName = campaign ? campaign.label : "";
+
+        // 提取 adRevenueValue 中的 roasTarget
+        const adRevenueValue = item.adRevenueValue || {};
+        const roasTarget = adRevenueValue.roasTarget;
+        const purchaseMethod = getPurchaseMethodLabel(item.billingType, item.optimizeGoal);
+
         return {
           ...base,
           groupId: item.groupId,
           campaignId: item.campaignId,
-          dayBudget: formatBudget(item.dayBudget),
+          dayBudget: formatDayBudget(item.dayBudget),
           billingType: item.billingType,
           productType: item.productType,
+          packageName: item.packageName,
           bid: formatBudget(item.bid),
+          campaignName: campaignName,
+          optimizeGoal: item.optimizeGoal,
+          purchaseMethod: purchaseMethod,
+          targetROI: purchaseMethod === "ROAS" && roasTarget != null ? `${roasTarget}%` : "-", // 格式化显示
+          statusUpdating: false,
         };
       } else if (type === "creative") {
         const groupBasic = tabStates.group.allBasicData;
         const group = groupBasic.find((g) => String(g.value) === String(item.groupId));
+        // 从 groupBasic 推导 campaignId
+        const campaignId = group ? group.campaignId : null;
+        // 从 campaignBasic 推导 campaignName
+        const campaignBasic = tabStates.campaign.allBasicData;
+        const campaign = campaignBasic.find((c) => String(c.value) === String(campaignId));
+        const campaignName = campaign ? campaign.label : "";
         return {
           ...base,
           creativeId: item.creativeId,
           groupId: item.groupId,
-          campaignId: item.campaignId,
+          campaignId: campaignId,
           groupName: group ? group.label : "",
+          campaignName: campaignName,
+          statusUpdating: false,
         };
       }
       return item;
@@ -545,14 +758,22 @@ const applyFilterAndSort = async (tabName = activeTab.value) => {
   }
 
   if (tabName === "campaign" || tabName === "group") {
-    if (form.campaignIds?.length > 0) {
-      params.campaign_ids = form.campaignIds.map(Number);
+    if (sharedCampaignFilter.searchType === "id" && sharedCampaignFilter.campaignIds?.length > 0) {
+      params.campaign_ids = sharedCampaignFilter.campaignIds.map(Number);
     }
   }
 
   if (tabName === "campaign") {
-    if (form.campaignName) {
-      const matchedIds = filterByName(form.campaignName, state.allBasicData);
+    if (
+      sharedCampaignFilter.searchType === "name" &&
+      sharedCampaignFilter.campaignNames?.length > 0
+    ) {
+      const matchedIds = sharedCampaignFilter.campaignNames
+        .map((name) => {
+          const item = state.allBasicData.find((opt) => opt.value === name);
+          return item ? Number(item.value) : null;
+        })
+        .filter((id) => id !== null);
       if (matchedIds.length > 0) {
         params.campaign_ids = params.campaign_ids
           ? [...new Set([...params.campaign_ids, ...matchedIds])]
@@ -566,14 +787,41 @@ const applyFilterAndSort = async (tabName = activeTab.value) => {
   }
 
   if (tabName === "group" || tabName === "creative") {
-    if (form.groupIds?.length > 0) {
-      params.group_ids = form.groupIds.map(Number);
+    if (sharedGroupFilter.searchType === "id" && sharedGroupFilter.groupIds?.length > 0) {
+      params.group_ids = sharedGroupFilter.groupIds.map(Number);
     }
   }
 
   if (tabName === "group") {
-    if (form.groupName) {
-      const matchedIds = filterByName(form.groupName, state.allBasicData);
+    if (
+      sharedCampaignFilter.searchType === "name" &&
+      sharedCampaignFilter.campaignNames?.length > 0
+    ) {
+      const matchedIds = sharedCampaignFilter.campaignNames
+        .map((name) => {
+          const item = state.allBasicData.find((opt) => opt.value === name);
+          return item ? Number(item.value) : null;
+        })
+        .filter((id) => id !== null);
+      if (matchedIds.length > 0) {
+        params.campaign_ids = params.campaign_ids
+          ? [...new Set([...params.campaign_ids, ...matchedIds])]
+          : matchedIds;
+      } else {
+        state.tableData = [];
+        state.pagination.total = 0;
+        return;
+      }
+    }
+    // 处理组名称搜索
+    if (sharedGroupFilter.searchType === "name" && sharedGroupFilter.groupNames?.length > 0) {
+      const groupState = tabStates.group;
+      const matchedIds = sharedGroupFilter.groupNames
+        .map((name) => {
+          const item = groupState.allBasicData.find((opt) => opt.value === name);
+          return item ? Number(item.value) : null;
+        })
+        .filter((id) => id !== null);
       if (matchedIds.length > 0) {
         params.group_ids = params.group_ids
           ? [...new Set([...params.group_ids, ...matchedIds])]
@@ -587,17 +835,22 @@ const applyFilterAndSort = async (tabName = activeTab.value) => {
   }
 
   if (tabName === "creative") {
-    if (form.campaignId) {
-      params.campaign_id = Number(form.campaignId);
+    // 处理组ID搜索（传给API）
+    if (sharedGroupFilter.searchType === "id" && sharedGroupFilter.groupIds?.length > 0) {
+      params.group_ids = sharedGroupFilter.groupIds.map(Number);
     }
-    if (form.creativeIds?.length > 0) {
-      params.creative_ids = form.creativeIds.map(Number);
-    }
-    if (form.creativeName) {
-      const matchedIds = filterByName(form.creativeName, state.allBasicData);
+    // 处理组名称搜索（传给API）
+    if (sharedGroupFilter.searchType === "name" && sharedGroupFilter.groupNames?.length > 0) {
+      const groupState = tabStates.group;
+      const matchedIds = sharedGroupFilter.groupNames
+        .map((name) => {
+          const item = groupState.allBasicData.find((opt) => opt.value === name);
+          return item ? Number(item.value) : null;
+        })
+        .filter((id) => id !== null);
       if (matchedIds.length > 0) {
-        params.creative_ids = params.creative_ids
-          ? [...new Set([...params.creative_ids, ...matchedIds])]
+        params.group_ids = params.group_ids
+          ? [...new Set([...params.group_ids, ...matchedIds])]
           : matchedIds;
       } else {
         state.tableData = [];
@@ -608,8 +861,29 @@ const applyFilterAndSort = async (tabName = activeTab.value) => {
     // 创意层如果没选组，默认传当前计划的组，或当前账户所有组
     if (!params.group_ids || params.group_ids.length === 0) {
       let gIds = [];
-      if (form.campaignId) {
-        gIds = tabStates.creative.groupOptions.map((g) => Number(g.value));
+      // 根据计划筛选条件获取对应的组
+      let selectedCampaignId = null;
+      if (
+        sharedCampaignFilter.searchType === "id" &&
+        sharedCampaignFilter.campaignIds?.length > 0
+      ) {
+        selectedCampaignId = sharedCampaignFilter.campaignIds[0];
+      } else if (
+        sharedCampaignFilter.searchType === "name" &&
+        sharedCampaignFilter.campaignNames?.length > 0
+      ) {
+        const selectedName = sharedCampaignFilter.campaignNames[0];
+        const campaignItem = tabStates.campaign.allBasicData.find(
+          (opt) => opt.value === selectedName
+        );
+        selectedCampaignId = campaignItem ? campaignItem.value : null;
+      }
+      if (selectedCampaignId) {
+        const groupBasic = tabStates.group.allBasicData;
+        const filteredGroups = groupBasic.filter(
+          (g) => String(g.campaignId) === String(selectedCampaignId)
+        );
+        gIds = filteredGroups.map((g) => Number(g.value));
       } else {
         gIds = tabStates.group.allBasicData.map((g) => Number(g.value));
       }
@@ -617,6 +891,11 @@ const applyFilterAndSort = async (tabName = activeTab.value) => {
         params.group_ids = gIds;
       }
     }
+  }
+
+  if (tabName === "creative") {
+    // 创意ID和创意名称仅用于本地筛选，不传给API
+    // ...（此处省略，因为不需要传给API）
   }
 
   if (form.status !== null && form.status !== undefined && form.status !== "") {
@@ -640,7 +919,47 @@ const applyFilterAndSort = async (tabName = activeTab.value) => {
     }
     const records = res?.records || [];
     if (records.length > 0) {
-      state.tableData = convertResponseData(records, tabName);
+      // 提取所有广告ID
+      let ids = [];
+      let businessType;
+      if (tabName === "campaign") {
+        ids = records.map((item) => item.campaignId);
+        businessType = 1;
+      } else if (tabName === "group") {
+        ids = records.map((item) => item.groupId);
+        businessType = 2;
+      } else if (tabName === "creative") {
+        ids = records.map((item) => item.creativeId);
+        businessType = 3;
+      }
+
+      // 批量查询状态
+      try {
+        const statusRes = await MiAdsAPI.queryAdStatus(businessType, ids);
+        const statusMap = {};
+        (statusRes?.adInfo || []).forEach((item) => {
+          statusMap[item.id] = item;
+        });
+
+        // 将状态添加到记录中
+        const recordsWithStatus = records.map((item) => {
+          let adId;
+          if (tabName === "campaign") adId = item.campaignId;
+          else if (tabName === "group") adId = item.groupId;
+          else if (tabName === "creative") adId = item.creativeId;
+          return {
+            ...item,
+            status: statusMap[adId]?.status ?? -1,
+            unDeliveryReason: statusMap[adId]?.unDeliveryReason || [],
+          };
+        });
+
+        state.tableData = convertResponseData(recordsWithStatus, tabName);
+      } catch (statusError) {
+        console.error("获取状态失败:", statusError);
+        state.tableData = convertResponseData(records, tabName);
+      }
+
       state.pagination.total = res?.total || 0;
     } else {
       state.tableData = [];
@@ -679,8 +998,20 @@ const loadBasicDataForAccount = async (accountId) => {
       label: item.label,
     }));
 
-    tabStates.campaign.searchForm.campaignIds = [];
-    tabStates.campaign.searchForm.campaignName = "";
+    // 初始化共享的计划筛选状态
+    sharedCampaignFilter.searchType = "id";
+    sharedCampaignFilter.campaignIds = [];
+    sharedCampaignFilter.campaignNames = [];
+
+    // 初始化共享的组筛选状态
+    sharedGroupFilter.searchType = "id";
+    sharedGroupFilter.groupIds = [];
+    sharedGroupFilter.groupNames = [];
+
+    // 初始化共享的创意筛选状态
+    sharedCreativeFilter.searchType = "id";
+    sharedCreativeFilter.creativeIds = [];
+    sharedCreativeFilter.creativeNames = [];
 
     // Group
     tabStates.group.allBasicData = groupBasic;
@@ -692,16 +1023,15 @@ const loadBasicDataForAccount = async (accountId) => {
     tabStates.group.groupOptions = groupBasic.map((item) => ({
       value: item.value,
       label: item.label,
+      billingType: item.billingType,
+      productType: item.productType,
+      packageName: item.packageName,
     }));
     const campaignIdsInGroups = [...new Set(groupBasic.map((item) => item.campaignId))];
     tabStates.group.campaignIdOptions = campaignIdsInGroups.map((id) => ({
       value: String(id),
       label: String(id),
     }));
-
-    tabStates.group.searchForm.campaignIds = [];
-    tabStates.group.searchForm.groupIds = [];
-    tabStates.group.searchForm.groupName = "";
 
     // Creative
     tabStates.creative.allBasicData = creativeBasic;
@@ -714,17 +1044,39 @@ const loadBasicDataForAccount = async (accountId) => {
       value: item.value,
       label: item.label,
     }));
-    const campaignIdsInCreatives = [...new Set(creativeBasic.map((item) => item.campaignId))];
-    tabStates.creative.campaignOptions = campaignIdsInCreatives.map((id) => ({
+    const campaignIdsInCreatives = [...new Set(groupBasic.map((item) => item.campaignId))];
+    // 从campaignBasic中获取计划名称映射
+    const campaignMap = {};
+    campaignBasic.forEach((item) => {
+      campaignMap[item.value] = item.label;
+    });
+    // 计划选项 - 按ID显示ID，按名称显示名称
+    tabStates.creative.campaignIdOptions = campaignIdsInCreatives.map((id) => ({
       value: String(id),
       label: String(id),
     }));
+    tabStates.creative.campaignNameOptions = campaignIdsInCreatives.map((id) => ({
+      value: String(id),
+      label: campaignMap[String(id)] || String(id),
+    }));
+    tabStates.creative.campaignOptions = campaignIdsInCreatives.map((id) => ({
+      value: String(id),
+      label: campaignMap[String(id)] || String(id),
+    }));
 
-    tabStates.creative.searchForm.campaignId = null;
-    tabStates.creative.groupOptions = [];
-    tabStates.creative.searchForm.groupIds = [];
-    tabStates.creative.searchForm.creativeIds = [];
-    tabStates.creative.searchForm.creativeName = "";
+    // 组选项 - 按ID显示ID，按名称显示名称
+    tabStates.creative.groupIdOptions = groupBasic.map((item) => ({
+      value: item.value,
+      label: item.value,
+    }));
+    tabStates.creative.groupNameOptions = groupBasic.map((item) => ({
+      value: item.value,
+      label: item.label,
+    }));
+    tabStates.creative.groupOptions = groupBasic.map((item) => ({
+      value: item.value,
+      label: item.value,
+    }));
 
     applyFilterAndSort(activeTab.value);
   } catch (error) {
@@ -746,15 +1098,108 @@ const handleAccountChange = (newAccountId) => {
 };
 
 const handleCreativeCampaignChange = () => {
-  const selectedCampaignId = currentSearchForm.value.campaignId;
+  // 获取选中的计划ID
+  let selectedCampaignId = null;
+  if (sharedCampaignFilter.searchType === "id" && sharedCampaignFilter.campaignIds?.length > 0) {
+    selectedCampaignId = sharedCampaignFilter.campaignIds[0];
+  } else if (
+    sharedCampaignFilter.searchType === "name" &&
+    sharedCampaignFilter.campaignNames?.length > 0
+  ) {
+    const selectedName = sharedCampaignFilter.campaignNames[0];
+    const campaignItem = tabStates.campaign.allBasicData.find((opt) => opt.value === selectedName);
+    selectedCampaignId = campaignItem ? campaignItem.value : null;
+  }
+
   const groupBasic = tabStates.group.allBasicData;
 
-  const filteredGroups = groupBasic.filter(
-    (g) => String(g.campaignId) === String(selectedCampaignId)
-  );
+  // 如果没有选择计划，显示所有组；否则显示该计划下的组
+  let filteredGroups;
+  if (selectedCampaignId) {
+    filteredGroups = groupBasic.filter((g) => String(g.campaignId) === String(selectedCampaignId));
+  } else {
+    filteredGroups = groupBasic;
+  }
   tabStates.creative.groupOptions = filteredGroups.map((g) => ({ value: g.value, label: g.label }));
 
-  currentSearchForm.value.groupIds = filteredGroups.length > 0 ? [filteredGroups[0].value] : [];
+  // 清空组的筛选条件
+  sharedGroupFilter.groupIds = [];
+  sharedGroupFilter.groupNames = [];
+
+  // 清空创意的筛选条件
+  sharedCreativeFilter.creativeIds = [];
+  sharedCreativeFilter.creativeNames = [];
+
+  handleAutoQuery();
+};
+
+const handleGroupCampaignChange = () => {
+  // 获取选中的计划ID
+  let selectedCampaignId = null;
+  if (sharedCampaignFilter.searchType === "id" && sharedCampaignFilter.campaignIds?.length > 0) {
+    selectedCampaignId = sharedCampaignFilter.campaignIds[0];
+  } else if (
+    sharedCampaignFilter.searchType === "name" &&
+    sharedCampaignFilter.campaignNames?.length > 0
+  ) {
+    const selectedName = sharedCampaignFilter.campaignNames[0];
+    const campaignItem = tabStates.campaign.allBasicData.find((opt) => opt.value === selectedName);
+    selectedCampaignId = campaignItem ? campaignItem.value : null;
+  }
+
+  const groupBasic = tabStates.group.allBasicData;
+
+  // 如果没有选择计划，显示所有组；否则显示该计划下的组
+  let filteredGroups;
+  if (selectedCampaignId) {
+    filteredGroups = groupBasic.filter((g) => String(g.campaignId) === String(selectedCampaignId));
+  } else {
+    filteredGroups = groupBasic;
+  }
+
+  // 更新group维度的组选项
+  tabStates.group.groupIdOptions = filteredGroups.map((g) => ({ value: g.value, label: g.value }));
+  tabStates.group.groupOptions = filteredGroups.map((g) => ({ value: g.value, label: g.label }));
+
+  // 清空组的筛选条件
+  sharedGroupFilter.groupIds = [];
+  sharedGroupFilter.groupNames = [];
+
+  handleAutoQuery();
+};
+
+const handleCreativeGroupChange = () => {
+  // 获取选中的组ID
+  let selectedGroupId = null;
+  if (sharedGroupFilter.searchType === "id" && sharedGroupFilter.groupIds?.length > 0) {
+    selectedGroupId = sharedGroupFilter.groupIds[0];
+  } else if (sharedGroupFilter.searchType === "name" && sharedGroupFilter.groupNames?.length > 0) {
+    const selectedName = sharedGroupFilter.groupNames[0];
+    const groupItem = tabStates.group.allBasicData.find((opt) => opt.value === selectedName);
+    selectedGroupId = groupItem ? groupItem.value : null;
+  }
+
+  const creativeBasic = tabStates.creative.allBasicData;
+
+  // 根据选择的组过滤创意，如果没有选择组则显示所有创意
+  let filteredCreatives = creativeBasic;
+  if (selectedGroupId) {
+    filteredCreatives = creativeBasic.filter((c) => String(c.groupId) === String(selectedGroupId));
+  }
+
+  // 更新创意选项
+  tabStates.creative.creativeIdOptions = filteredCreatives.map((c) => ({
+    value: c.value,
+    label: c.value,
+  }));
+  tabStates.creative.creativeOptions = filteredCreatives.map((c) => ({
+    value: c.value,
+    label: c.label,
+  }));
+
+  // 清空创意的筛选条件
+  sharedCreativeFilter.creativeIds = [];
+  sharedCreativeFilter.creativeNames = [];
 
   handleAutoQuery();
 };
@@ -805,26 +1250,96 @@ const loadAllBasicData = async () => {
 
 // ==================== 交互处理 ====================
 
+const handleCampaignSearchTypeChange = () => {
+  if (sharedCampaignFilter.searchType === "id") {
+    sharedCampaignFilter.campaignNames = [];
+  } else {
+    sharedCampaignFilter.campaignIds = [];
+  }
+};
+
+const handleGroupSearchTypeChange = () => {
+  if (sharedGroupFilter.searchType === "id") {
+    sharedGroupFilter.groupNames = [];
+  } else {
+    sharedGroupFilter.groupIds = [];
+  }
+};
+
+const handleCreativeSearchTypeChange = () => {
+  if (sharedCreativeFilter.searchType === "id") {
+    sharedCreativeFilter.creativeNames = [];
+  } else {
+    sharedCreativeFilter.creativeIds = [];
+  }
+};
+
 const handleAutoQuery = () => {
   applyFilterAndSort(activeTab.value);
+};
+
+const handleNameClick = (col, row) => {
+  const targetTab = col.targetTab;
+
+  if (targetTab === "group") {
+    // 跳转到group，设置计划筛选
+    sharedCampaignFilter.searchType = "id";
+    sharedCampaignFilter.campaignIds = [row.campaignId];
+    sharedCampaignFilter.campaignNames = [];
+    // 清空组筛选
+    sharedGroupFilter.groupIds = [];
+    sharedGroupFilter.groupNames = [];
+  } else if (targetTab === "campaign") {
+    // 跳转到campaign，设置计划筛选
+    sharedCampaignFilter.searchType = "id";
+    sharedCampaignFilter.campaignIds = [row.campaignId];
+    sharedCampaignFilter.campaignNames = [];
+    // 清空组和创意筛选
+    sharedGroupFilter.groupIds = [];
+    sharedGroupFilter.groupNames = [];
+    sharedCreativeFilter.creativeIds = [];
+    sharedCreativeFilter.creativeNames = [];
+  } else if (targetTab === "creative") {
+    // 跳转到creative，设置组筛选
+    sharedGroupFilter.searchType = "id";
+    sharedGroupFilter.groupIds = [row.groupId];
+    sharedGroupFilter.groupNames = [];
+    // 清空创意筛选
+    sharedCreativeFilter.creativeIds = [];
+    sharedCreativeFilter.creativeNames = [];
+  }
+
+  // 切换维度
+  activeTab.value = targetTab;
+
+  // 执行查询
+  applyFilterAndSort(targetTab);
 };
 
 const handleReset = (tabName = activeTab.value) => {
   const state = tabStates[tabName];
 
+  // 重置共享的计划筛选状态
+  sharedCampaignFilter.searchType = "id";
+  sharedCampaignFilter.campaignIds = [];
+  sharedCampaignFilter.campaignNames = [];
+
+  // 重置共享的组筛选状态
+  sharedGroupFilter.searchType = "id";
+  sharedGroupFilter.groupIds = [];
+  sharedGroupFilter.groupNames = [];
+
+  // 重置共享的创意筛选状态
+  sharedCreativeFilter.searchType = "id";
+  sharedCreativeFilter.creativeIds = [];
+  sharedCreativeFilter.creativeNames = [];
+
   if (tabName === "campaign") {
-    state.searchForm.campaignIds = [];
-    state.searchForm.campaignName = "";
+    // campaign不需要额外重置其他字段
   } else if (tabName === "group") {
-    state.searchForm.campaignIds = [];
-    state.searchForm.groupIds = [];
-    state.searchForm.groupName = "";
+    // group不需要额外重置其他字段
   } else if (tabName === "creative") {
-    state.searchForm.campaignId = null;
     tabStates.creative.groupOptions = [];
-    state.searchForm.groupIds = [];
-    state.searchForm.creativeIds = [];
-    state.searchForm.creativeName = "";
   }
 
   state.searchForm.status = null;
@@ -843,9 +1358,111 @@ const handleSortChange = ({ prop, order }) => {
 
 const handleTabChange = (tabName) => {
   activeTab.value = tabName;
-  const state = tabStates[tabName];
-  if (state.tableData.length === 0 && accountDataLoaded.value) {
-    applyFilterAndSort(tabName);
+  applyFilterAndSort(tabName);
+};
+
+// ==================== 表格组件事件处理 ====================
+
+const handleStatusChange = async ({ row, newStatus, tab }) => {
+  if (tab === "campaign") {
+    await handleCampaignStatusChange(row, newStatus);
+  } else if (tab === "group") {
+    await handleGroupStatusChange(row, newStatus);
+  } else if (tab === "creative") {
+    await handleCreativeStatusChange(row, newStatus);
+  }
+};
+
+const handleBudgetEditStart = (row) => {
+  currentEditingRowId.value = row.campaignId;
+  row.budgetPopoverVisible = true;
+
+  if (row.dayBudget === "不限" || row.dayBudget === "-") {
+    row.editingBudgetType = "unlimited";
+    row.editingBudgetValue = 0;
+  } else {
+    row.editingBudgetType = "limited";
+    const formatted = String(row.dayBudget).replace(/,/g, "");
+    row.editingBudgetValue = parseFloat(formatted) || 0;
+  }
+};
+
+const handleBudgetEditCancel = (row) => {
+  row.budgetPopoverVisible = false;
+  row.editingBudgetType = null;
+  row.editingBudgetValue = 0;
+  currentEditingRowId.value = null;
+};
+
+const handleBudgetSubmit = async (row) => {
+  try {
+    const budget =
+      row.editingBudgetType === "unlimited" ? 0 : Math.round(row.editingBudgetValue * 100000);
+
+    await MiAdsAPI.updateCampaignBudget(String(row.campaignId), budget, Number(row.accountId));
+
+    ElMessage.success("预算更新成功");
+    row.budgetPopoverVisible = false;
+    currentEditingRowId.value = null;
+
+    await applyFilterAndSort("campaign");
+  } catch (error) {
+    console.error("更新预算失败:", error);
+    ElMessage.error(error?.message || "更新失败");
+  }
+};
+
+const handleCampaignStatusChange = async (row, newStatus) => {
+  const targetStatus = newStatus ? 0 : 1;
+
+  row.statusUpdating = true;
+
+  try {
+    // 调用 API
+    await MiAdsAPI.updateCampaignStatus(String(row.campaignId), newStatus, Number(row.accountId));
+
+    // 刷新整页数据（当前tab）
+    await applyFilterAndSort("campaign");
+
+    ElMessage.success(`计划已${newStatus ? "投放" : "暂停"}`);
+  } catch (error) {
+    console.error("更新计划状态失败:", error);
+    ElMessage.error(error?.message || "更新状态失败");
+
+    // 错误时也刷新数据，确保界面状态与后端一致
+    await applyFilterAndSort("campaign");
+  } finally {
+    row.statusUpdating = false;
+  }
+};
+
+const handleGroupStatusChange = async (row, newStatus) => {
+  row.statusUpdating = true;
+  try {
+    await MiAdsAPI.updateGroupStatus(String(row.groupId), newStatus, Number(row.accountId));
+    await applyFilterAndSort("group");
+    ElMessage.success(`广告组已${newStatus ? "投放" : "暂停"}`);
+  } catch (error) {
+    console.error("更新广告组状态失败:", error);
+    ElMessage.error(error?.message || "更新状态失败");
+    await applyFilterAndSort("group");
+  } finally {
+    row.statusUpdating = false;
+  }
+};
+
+const handleCreativeStatusChange = async (row, newStatus) => {
+  row.statusUpdating = true;
+  try {
+    await MiAdsAPI.updateCreativeStatus(String(row.creativeId), newStatus, Number(row.accountId));
+    await applyFilterAndSort("creative");
+    ElMessage.success(`创意已${newStatus ? "投放" : "暂停"}`);
+  } catch (error) {
+    console.error("更新创意状态失败:", error);
+    ElMessage.error(error?.message || "更新状态失败");
+    await applyFilterAndSort("creative");
+  } finally {
+    row.statusUpdating = false;
   }
 };
 
@@ -859,28 +1476,8 @@ const handleCurrentChange = (val, tabName = activeTab.value) => {
   applyFilterAndSort(tabName);
 };
 
-const getSummaries = (param) => {
-  const { columns, data } = param;
-  const sums = [];
-  columns.forEach((column, index) => {
-    if (index === 0) {
-      sums[index] = h("div", { style: { fontWeight: "bold", textAlign: "center" } }, "总计");
-      return;
-    }
-    if (column.property === "dayBudget") {
-      const total = data.reduce((sum, item) => {
-        return sum + Number(item.dayBudget ? String(item.dayBudget).replace(/,/g, "") : 0);
-      }, 0);
-      sums[index] = total.toFixed(3);
-      return;
-    }
-    sums[index] = "";
-  });
-  return sums;
-};
-
 const handleAdd = () => {
-  console.log("Add new", activeTab.value);
+  // Add button click is handled by MIAdsTable component
 };
 
 const handleEdit = (row) => {
@@ -889,6 +1486,14 @@ const handleEdit = (row) => {
 
 const handleDelete = (row) => {
   console.log("Delete", row);
+};
+
+const handleCampaignAdded = () => {
+  applyFilterAndSort(activeTab.value);
+};
+
+const handleGroupAdded = () => {
+  applyFilterAndSort(activeTab.value);
 };
 
 // ==================== 生命周期 ====================
@@ -992,124 +1597,6 @@ onUnmounted(() => {});
   }
 }
 
-.function-bar {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  padding: 12px 20px;
-  background: var(--el-bg-color-overlay);
-  border-radius: 0px 12px 0 0;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-
-  .function-bar-title {
-    padding-right: 20px;
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--el-text-color-primary);
-    border-right: 1px solid var(--el-border-color-lighter);
-  }
-
-  .function-bar-content {
-    display: flex;
-    gap: 12px;
-  }
-}
-
-.tab-navigation {
-  padding: 0;
-  border:0;
-  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.04);
-
-  :deep(.el-tabs) {
-    --el-tabs-header-height: 40px;
-    
-
-    .el-tabs__nav{
-      border: 0;
-      border-radius: 12px;
-    }
-    .el-tabs__header {
-      margin-bottom: 0;
-      border: 0;
-    }
-
-    
-    .el-tabs__item {
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.2s linear;
-      background: var(--el-bg-color-overlay);
-      
-      
-    }
-    #tab-campaign{
-        border-radius: 12px 0 0 0;
-      }
-
-    #tab-creative{
-        border-radius: 0 12px 0 0;
-    }
-    .el-tabs__item.is-active {
-      font-weight: 600;
-      background-color: var(--el-color-primary-light-9);
-    }
-
-    .el-tabs__active-bar {
-      height: 3px;
-      border-radius: 2px;
-    }
-  }
-}
-
-:deep(.el-pagination) {
-  padding: 16px;
-  margin-top: 20px;
-  background: var(--el-bg-color-overlay);
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-
-  .btn-prev,
-  .btn-next,
-  .el-pager li {
-    transition: all 0.2s linear;
-
-    &:hover {
-      color: var(--el-color-primary);
-      background-color: var(--el-color-primary-light-9);
-    }
-  }
-
-  .el-pager li.is-active {
-    color: #ffffff;
-    background-color: var(--el-color-primary);
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(64, 128, 255, 0.3);
-  }
-
-  .el-pagination__total {
-    color: var(--el-text-color-regular);
-  }
-}
-
-:deep(.el-table__row) {
-  transition: all 0.2s linear;
-
-  &:hover {
-    cursor: pointer;
-    background-color: var(--el-color-primary-light-9);
-  }
-}
-
-:deep(.el-table__empty-block) {
-  min-height: 200px;
-
-  .el-table__empty-text {
-    font-size: 14px;
-    color: var(--el-text-color-secondary);
-  }
-}
-
 .text-muted {
   color: var(--el-text-color-placeholder);
 }
@@ -1140,31 +1627,6 @@ onUnmounted(() => {});
   }
 }
 
-:deep(.el-table__body-wrapper)::-webkit-scrollbar,
-:deep(.el-select-dropdown__wrap)::-webkit-scrollbar,
-:deep(.el-dialog__body)::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-:deep(.el-table__body-wrapper)::-webkit-scrollbar-track,
-:deep(.el-select-dropdown__wrap)::-webkit-scrollbar-track,
-:deep(.el-dialog__body)::-webkit-scrollbar-track {
-  background: var(--el-fill-color-light);
-  border-radius: 4px;
-}
-
-:deep(.el-table__body-wrapper)::-webkit-scrollbar-thumb,
-:deep(.el-select-dropdown__wrap)::-webkit-scrollbar-thumb,
-:deep(.el-dialog__body)::-webkit-scrollbar-thumb {
-  background: var(--el-color-primary-light-5);
-  border-radius: 4px;
-
-  &:hover {
-    background: var(--el-color-primary-light-3);
-  }
-}
-
 .mt-4 {
   margin-top: 1rem;
 }
@@ -1175,74 +1637,5 @@ onUnmounted(() => {});
 
 .justify-center {
   justify-content: center;
-}
-
-.action-buttons {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-
-  .action-btn {
-    padding: 4px 16px !important;
-    font-size: 13px !important;
-    border-radius: 4px !important;
-    min-height: auto !important;
-    height: auto !important;
-    line-height: 1.4;
-
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-
-    color: var(--el-text-color-regular) !important;
-    transition: all 250ms ease !important;
-    cursor: pointer;
-
-    .el-icon {
-      margin-right: 4px;
-      font-size: 12px !important;
-      vertical-align: middle;
-    }
-
-    span {
-      vertical-align: middle;
-    }
-
-    &:hover {
-      transform: translateY(-1px);
-    }
-
-    &:active {
-      transform: scale(0.98);
-    }
-  }
-
-  .action-btn-edit {
-    color: var(--el-color-primary) !important;
-
-    &:hover {
-      color: var(--el-text-color-regular) !important;
-      background: var(--el-color-primary-light-9) !important;
-      box-shadow: 0 2px 8px rgba(64, 158, 255, 0.25) !important;
-    }
-
-    &:active {
-      background: var(--el-color-primary-light-8) !important;
-    }
-  }
-
-  .action-btn-delete {
-    color: var(--el-color-danger) !important;
-
-    &:hover {
-      color: var(--el-text-color-regular) !important;
-      background: var(--el-color-danger-light-9) !important;
-      box-shadow: 0 2px 8px rgba(245, 108, 108, 0.25) !important;
-    }
-
-    &:active {
-      background: var(--el-color-danger-light-8) !important;
-    }
-  }
 }
 </style>
