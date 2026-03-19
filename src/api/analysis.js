@@ -27,11 +27,48 @@ const AnalysisAPI = {
     });
   },
   /**
-   * 获取平台列表
-   * @param {string} type - 平台类型，如'UA'
+   * 查询ROI数据
+   * @param {Object} params - 查询参数
+   * @param {Object} params.date_range - 日期范围
+   * @param {string} params.date_range.start - 开始日期
+   * @param {string} params.date_range.end - 结束日期
+   * @param {Array<number>} params.game_ids - 游戏ID数组
+   * @param {Array<number>} params.channel_ids - 渠道ID数组
+   * @param {Array<number>} params.ua_platform_ids - 投放平台ID数组
+   * @param {Array<number>} params.mon_platform_ids - 变现平台ID数组
+   * @param {number} params.page - 页码
+   * @param {number} params.size - 每页大小
+   * @returns {Promise<Object>} 响应数据包含 total, page, size, summary, details
+   */
+  queryROI(params) {
+    return request({
+      url: `${ANALYSIS_BASE_URL}/analytics/roi`,
+      method: "post",
+      data: params,
+      customHandleResponse: true,
+    });
+  },
+  /**
+   * 获取消耗平台列表
+   * @param {string} type - 平台类型
    * @returns {Promise} 平台列表
    */
-  getPlatformOptions(type = "UA") {
+  getPlatformOptionsUA(type = "UA") {
+    return request({
+      url: `${ANALYSIS_BASE_URL}/analytics/options/platforms`,
+      method: "get",
+      params: {
+        type,
+      },
+      customHandleResponse: true,
+    });
+  },
+  /**
+   * 获取变现平台列表
+   * @param {string} type - 平台类型
+   * @returns {Promise} 平台列表
+   */
+  getPlatformOptionsMON(type = "MON") {
     return request({
       url: `${ANALYSIS_BASE_URL}/analytics/options/platforms`,
       method: "get",

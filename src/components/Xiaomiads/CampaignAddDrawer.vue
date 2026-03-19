@@ -68,18 +68,6 @@
           <span v-else style="color: var(--el-text-color-secondary)">不限</span>
         </div>
       </el-form-item>
-
-      <el-form-item label="投放时间">
-        <el-date-picker
-          v-model="form.timeRange"
-          type="datetimerange"
-          range-separator="至"
-          start-placeholder="开始时间"
-          end-placeholder="结束时间"
-          style="width: 100%"
-          value-format="x"
-        />
-      </el-form-item>
     </el-form>
 
     <template #footer>
@@ -119,8 +107,6 @@ const form = reactive({
   totalBudget: 0,
   totalBudgetType: "unlimited",
   timeRange: null,
-  beginTime: null,
-  endTime: null,
 });
 
 const rules = {
@@ -152,8 +138,6 @@ watch(
       form.totalBudget = 0;
       form.totalBudgetType = "unlimited";
       form.timeRange = null;
-      form.beginTime = null;
-      form.endTime = null;
     }
   }
 );
@@ -168,12 +152,6 @@ const handleSubmit = async () => {
     await formRef.value.validate();
     loading.value = true;
 
-    // 处理时间范围
-    if (form.timeRange && form.timeRange.length === 2) {
-      form.beginTime = form.timeRange[0];
-      form.endTime = form.timeRange[1];
-    }
-
     // 计算预算值
     const dayBudgetValue =
       form.dayBudgetType === "unlimited" ? 0 : Math.round(form.dayBudget * 100000);
@@ -186,9 +164,7 @@ const handleSubmit = async () => {
       campaign_name: form.campaignName,
       campaign_type: form.campaignType,
       day_budget: dayBudgetValue,
-      total_budget: totalBudgetValue,
-      begin_time: form.beginTime,
-      end_time: form.endTime,
+      total_budget: totalBudgetValue
     };
 
     await MiAdsAPI.createCampaign(submitData);

@@ -30,7 +30,7 @@ function handleClipboard() {
     navigator.clipboard
       .writeText(props.text)
       .then(() => {
-        ElMessage.success("Copy successfully");
+        ElMessage.success("复制成功");
       })
       .catch((error) => {
         ElMessage.warning("Copy failed");
@@ -47,7 +47,7 @@ function handleClipboard() {
     try {
       const successful = document.execCommand("copy");
       if (successful) {
-        ElMessage.success("Copy successfully!");
+        ElMessage.success("复制成功!");
       } else {
         ElMessage.warning("Copy failed!");
       }

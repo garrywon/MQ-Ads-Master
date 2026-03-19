@@ -1486,6 +1486,8 @@ const handleEdit = (row) => {
 
 const handleDelete = (row) => {
   console.log("Delete", row);
+  // 删除成功后刷新当前列表
+  applyFilterAndSort(activeTab.value);
 };
 
 const handleCampaignAdded = () => {

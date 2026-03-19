@@ -150,11 +150,7 @@
               <el-icon><Edit /></el-icon>
               <span>编辑</span>
             </el-button>
-            <el-button
-              class="action-btn action-btn-delete"
-              size="small"
-              @click="emit('delete', row)"
-            >
+            <el-button class="action-btn action-btn-delete" size="small" @click="handleDelete(row)">
               <el-icon><Delete /></el-icon>
               <span>删除</span>
             </el-button>
@@ -202,7 +198,7 @@
 <script setup>
 import { ref, reactive, computed, h } from "vue";
 import { Plus, Edit, Delete, Warning } from "@element-plus/icons-vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import MiAdsAPI from "@/api/miads";
 import CampaignAddDrawer from "@/components/Xiaomiads/CampaignAddDrawer.vue";
 import GroupAddDrawer from "@/components/Xiaomiads/GroupAddDrawer.vue";
@@ -372,6 +368,50 @@ const handleGroupStatusChange = async (row, newStatus) => {
 const handleCreativeStatusChange = async (row, newStatus) => {
   emit("status-change", { row, newStatus, tab: "creative" });
 };
+
+// 删除广告（计划/组/创意）
+const handleDelete = async (row) => {
+  try {
+    // 确定业务类型和ID
+    let businessType, ids, accountId;
+
+    if (localActiveTab.value === "campaign") {
+      businessType = 1;
+      ids = [row.campaignId];
+      accountId = props.currentAccountId;
+    } else if (localActiveTab.value === "group") {
+      businessType = 2;
+      ids = [row.groupId];
+      accountId = props.currentAccountId;
+    } else if (localActiveTab.value === "creative") {
+      businessType = 3;
+      ids = [row.creativeId];
+      accountId = props.currentAccountId;
+    } else {
+      ElMessage.error("未知的维度类型");
+      return;
+    }
+
+    // 确认删除
+    await ElMessageBox.confirm(`确定要删除选中的广告吗？此操作不可恢复。`, "警告", {
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
+      type: "warning",
+    });
+
+    // 调用删除API
+    await MiAdsAPI.deleteAds(businessType, ids, accountId);
+
+    ElMessage.success("删除成功");
+    // 触发删除事件，让父组件刷新数据
+    emit("delete", row);
+  } catch (error) {
+    if (error !== "cancel") {
+      console.error("删除失败:", error);
+      ElMessage.error(error?.message || "删除失败");
+    }
+  }
+};
 </script>
 
 <style lang="scss" scoped>
@@ -493,7 +533,9 @@ const handleCreativeStatusChange = async (row, newStatus) => {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
-  .btn-prev, .btn-next, .el-pager li {
+  .btn-prev,
+  .btn-next,
+  .el-pager li {
     transition: all 0.2s linear;
     &:hover {
       color: var(--el-color-primary);
@@ -629,7 +671,10 @@ const handleCreativeStatusChange = async (row, newStatus) => {
   opacity: 0.5;
 }
 
-.flex { display: flex; }
-.justify-center { justify-content: center; }
+.flex {
+  display: flex;
+}
+.justify-center {
+  justify-content: center;
+}
 </style>
-

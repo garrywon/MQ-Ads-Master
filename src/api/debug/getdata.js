@@ -51,7 +51,7 @@ export const DebugAPI = {
    */
   getSyncLogs(params) {
     return request({
-      url: `${DEBUG_BASE_URL}/system/logs`,
+      url: `${DEBUG_BASE_URL}/system/sync-logs`,
       method: "get",
       params,
       customHandleResponse: true,

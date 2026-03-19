@@ -67,25 +67,6 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="渠道">
-          <el-select
-            v-model="searchForm.channelIds"
-            placeholder="请选择渠道"
-            clearable
-            multiple
-            collapse-tags
-            collapse-tags-tooltip
-            style="width: 180px"
-            @change="handleQueryClick"
-          >
-            <el-option
-              v-for="item in channelOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
         <el-form-item label="游戏">
           <el-select
             v-model="searchForm.gameIds"
@@ -100,25 +81,6 @@
           >
             <el-option
               v-for="item in gameOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="计划名称">
-          <el-select
-            v-model="searchForm.campaignNames"
-            placeholder="请选择计划名称"
-            clearable
-            multiple
-            collapse-tags
-            collapse-tags-tooltip
-            style="width: 180px"
-            @change="handleQueryClick"
-          >
-            <el-option
-              v-for="item in campaignOptions"
               :key="item.value"
               :label="item.label"
               :value="item.value"
@@ -192,41 +154,23 @@
 
             <template #default="scope">
               <template v-if="col.prop === 'packageName'">
-                <span
-                  class="copyable-text"
-                  :class="{ 'text-muted': !scope.row.packageName }"
-                  @click="copyText(scope.row.packageName)"
-                  :style="{
-                    cursor: scope.row.packageName ? 'pointer' : 'default',
-                    color: scope.row.packageName ? 'var(--el-color-primary)' : '',
-                  }"
+                <span>{{ scope.row[col.prop] }}</span>
+                <CopyButton
+                  v-if="scope.row.packageName && scope.row.packageName !== ''"
+                  :text="scope.row[col.prop]"
+                  style="margin-left: 8px; vertical-align: middle"
                 >
-                  {{ scope.row.packageName || "-" }}
-                </span>
+                  <el-icon><DocumentCopy /></el-icon>
+                </CopyButton>
               </template>
-              <template v-else-if="col.prop === 'gameName'">
-                <span
-                  class="copyable-text"
-                  :class="{ 'text-muted': !scope.row.gameName }"
-                  @click="copyText(scope.row.gameName)"
-                  :style="{
-                    cursor: scope.row.gameName ? 'pointer' : 'default',
-                    color: scope.row.gameName ? 'var(--el-color-primary)' : '',
-                  }"
-                >
-                  {{ scope.row.gameName || "-" }}
-                </span>
+              <template v-else-if="col.slotName === 'revenue'">
+                <el-text type="success">{{ formatNumber(scope.row[col.prop]) }}</el-text>
               </template>
-              <template v-else-if="col.slotName === 'spend'">
-                <el-text type="danger">{{ formatNumber(scope.row[col.prop]) }}</el-text>
+              <template v-else-if="col.slotName === 'requests'">
+                <el-text>{{ formatNumber(scope.row[col.prop]) }}</el-text>
               </template>
               <template v-else-if="col.slotName === 'platform'">
                 <el-tag :type="getPlatformTag(scope.row[col.prop])">
-                  {{ scope.row[col.prop] }}
-                </el-tag>
-              </template>
-              <template v-else-if="col.slotName === 'channel'">
-                <el-tag :type="getChannelTag(scope.row[col.prop])">
                   {{ scope.row[col.prop] }}
                 </el-tag>
               </template>
@@ -415,11 +359,9 @@ const stepLoading = ref(false);
 const searchForm = ref({
   date: [],
   platforms: [],
-  campaignNames: [],
-  channelIds: [],
   gameIds: [],
   groupBy: ["report_date", "game_id", "channel_id"],
-  metrics: ["spend", "impressions", "clicks", "installs", "ctr"],
+  metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr", "fill_rate"],
 });
 
 // 平台选项（从API动态获取）
@@ -431,31 +373,27 @@ const channelOptions = ref([]);
 // 游戏选项（从API动态获取）
 const gameOptions = ref([]);
 
-// 计划选项（从API动态获取）
-const campaignOptions = ref([]);
-
 // 图表相关状态
 const chartType = ref("line");
 const chartDateRange = ref([]);
-const chartMetric = ref("spend");
+const chartMetric = ref("revenue");
 
 // 分组选项
 const groupByOptions = [
   { value: "report_date", label: "日期" },
   { value: "platform_id", label: "广告平台" },
-  { value: "campaign_name", label: "计划名称" },
   { value: "game_id", label: "游戏" },
-  { value: "channel_id", label: "渠道" },
 ];
 
 // 指标选项
 const metricsOptions = [
-  { value: "spend", label: "花费" },
+  { value: "revenue", label: "收益" },
   { value: "impressions", label: "展示数" },
   { value: "clicks", label: "点击数" },
-  { value: "installs", label: "激活数" },
+  { value: "fills", label: "填充数" },
+  { value: "requests", label: "响应数" },
+  { value: "fill_rate", label: "填充率" },
   { value: "ctr", label: "CTR" },
-  { value: "cvr", label: "CVR" },
 ];
 
 // 列拖拽相关
@@ -464,18 +402,10 @@ const cols = ref([
   { label: "日期", align: "center", prop: "date", width: 120, sortable: true },
   { label: "图标", align: "center", prop: "icon", width: 80, templet: "image" }, // 图标列不启用排序
   {
-    label: "渠道",
-    align: "center",
-    prop: "channel",
-    width: 120,
-    slotName: "channel",
-    sortable: true,
-  },
-  {
     label: "包名",
     align: "center",
     prop: "packageName",
-    minWidth: 210,
+    minWidth: 190,
     sortable: true,
   },
   {
@@ -494,24 +424,18 @@ const cols = ref([
     sortable: true,
   },
   {
-    label: "计划名称",
+    label: "收益",
     align: "center",
-    prop: "campaign_name",
-    minWidth: 150,
-    sortable: true,
-  },
-  {
-    label: "花费",
-    align: "center",
-    prop: "spend",
+    prop: "revenue",
     minWidth: 120,
-    slotName: "spend",
+    slotName: "revenue",
     sortable: true,
   },
   { label: "展示数", align: "center", prop: "impressions", minWidth: 128, sortable: true },
   { label: "点击数", align: "center", prop: "clicks", minWidth: 128, sortable: true },
-  { label: "激活数", align: "center", prop: "installs", minWidth: 128, sortable: true },
-  { label: "CVR", align: "center", prop: "cvr", minWidth: 128, sortable: true },
+  { label: "填充数", align: "center", prop: "fills", minWidth: 128, sortable: true },
+  { label: "响应数", align: "center", prop: "requests", minWidth: 128, sortable: true },
+  { label: "填充率", align: "center", prop: "fill_rate", minWidth: 128, sortable: true },
   { label: "CTR", align: "center", prop: "ctr", minWidth: 128, sortable: true },
 ]);
 
@@ -533,22 +457,16 @@ const finalColumns = computed(() => {
       case "platform_id":
         activeProps.add("platform");
         break;
-      case "campaign_name":
-        activeProps.add("campaign_name");
-        break;
       case "game_id":
         activeProps.add("packageName");
         activeProps.add("gameName");
         activeProps.add("icon");
         break;
-      case "channel_id":
-        activeProps.add("channel");
-        break;
     }
   });
 
   // 添加指标列（根据选择的指标）
-  const metricProps = ["spend", "impressions", "clicks", "installs", "cvr", "ctr"];
+  const metricProps = ["revenue", "impressions", "clicks", "fills", "requests", "fill_rate", "ctr"];
   metrics.forEach((prop) => {
     if (metricProps.includes(prop)) {
       activeProps.add(prop);
@@ -608,10 +526,10 @@ const getChannelTag = (channel) => {
   return tags[channel] || "info"; // 默认灰色
 };
 
-// 动态计算CVR值的函数
-const calculateCVR = (item) => {
-  if (item.clicks && item.installs !== undefined && item.clicks > 0) {
-    return ((item.installs / item.clicks) * 100).toFixed(2) + "%";
+// 动态计算填充率的函数
+const calculateFillRate = (item) => {
+  if (item.requests && item.fills !== undefined && item.requests > 0) {
+    return ((item.fills / item.requests) * 100).toFixed(2) + "%";
   }
   return "0.00%";
 };
@@ -651,7 +569,15 @@ const formatNumber = (num) => {
 // ====== 总计行相关函数 ======
 
 // 数值列列表（需要统计的列）
-const numericColumns = ["spend", "impressions", "clicks", "installs", "ctr", "cvr"];
+const numericColumns = [
+  "revenue",
+  "impressions",
+  "clicks",
+  "fills",
+  "requests",
+  "ctr",
+  "fill_rate",
+];
 
 // 判断是否为数值列
 const isNumericColumn = (prop) => {
@@ -676,14 +602,14 @@ const formatSummaryValue = (prop) => {
   const sum = calculateColumnSum(prop);
 
   switch (prop) {
-    case "spend":
-      return formatNumber(sum);
+    case "revenue":
     case "impressions":
     case "clicks":
-    case "installs":
+    case "fills":
+    case "requests":
       return formatNumber(sum);
     default:
-      return "-"; // 包括 ctr、cvr 在内的非数值列都返回 "-"
+      return "-"; // 包括 ctr、fill_rate 在内的非数值列都返回 "-"
   }
 };
 
@@ -724,6 +650,7 @@ const indexAction = async (params) => {
           params.channelIds &&
           params.channelIds.length > 0 && { channel_ids: params.channelIds }),
         ...(params && params.gameIds && params.gameIds.length > 0 && { game_ids: params.gameIds }),
+        business_type: "MON",
       },
       // 分组字段 (可选)
       group_by:
@@ -732,7 +659,7 @@ const indexAction = async (params) => {
       metrics:
         params && params.metrics && params.metrics.length > 0
           ? params.metrics
-          : ["spend", "impressions", "clicks", "installs", "revenue", "ctr"],
+          : ["revenue", "impressions", "clicks", "fills", "requests", "ctr"],
       // 分页参数 (可选)
       page: params && typeof params.pageNum === "number" ? params.pageNum : 1,
       size: params && typeof params.pageSize === "number" ? params.pageSize : 10,
@@ -755,8 +682,8 @@ const indexAction = async (params) => {
 
       // 映射API返回的字段到表格所需字段
       resultData = rawData.map((item, index) => {
-        // 计算CVR值（保留自动计算）
-        const calculatedCVR = calculateCVR(item);
+        // 计算填充率（保留自动计算）
+        const calculatedFillRate = calculateFillRate(item);
         // 格式化API返回的CTR值为百分数
         const formattedCTR = formatCTR(item);
 
@@ -772,12 +699,13 @@ const indexAction = async (params) => {
           platform: item.platform_id || item.platform || "",
           platformName: item.platform_name || item.platformName || item.platform || item.name || "",
           campaign_name: item.campaign_name || item.campaignName || item.campaign || "",
-          spend: item.spend || 0,
+          revenue: item.revenue || 0,
           impressions: item.impressions || 0,
           clicks: item.clicks || 0,
-          installs: item.installs || 0,
+          fills: item.fills || 0,
+          requests: item.requests || 0,
           // 保留计算的值
-          cvr: calculatedCVR,
+          fill_rate: calculatedFillRate,
           // 使用格式化后的CTR值
           ctr: formattedCTR,
           // 保留原始数据以备后续使用，但不覆盖计算的字段
@@ -786,7 +714,7 @@ const indexAction = async (params) => {
               ([key]) =>
                 ![
                   "ctr",
-                  "cvr",
+                  "fill_rate",
                   "platform_id",
                   "platform_name",
                   "campaign_name",
@@ -794,6 +722,9 @@ const indexAction = async (params) => {
                   "platform",
                   "platformName",
                   "campaign",
+                  "revenue",
+                  "fills",
+                  "requests",
                 ].includes(key)
             )
           ),
@@ -818,46 +749,6 @@ const indexAction = async (params) => {
 };
 
 // 方法定义
-const copyText = (text) => {
-  if (!text) {
-    ElMessage.warning("无内容可复制");
-    return;
-  }
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        ElMessage.success("复制成功");
-      })
-      .catch((error) => {
-        ElMessage.warning("复制失败");
-        console.error("[CopyText] Copy failed", error);
-      });
-  } else {
-    // 兼容性处理
-    const input = document.createElement("input");
-    input.style.position = "absolute";
-    input.style.left = "-9999px";
-    input.setAttribute("value", text);
-    document.body.appendChild(input);
-    input.select();
-    try {
-      const successful = document.execCommand("copy");
-      if (successful) {
-        ElMessage.success("复制成功");
-      } else {
-        ElMessage.warning("复制失败");
-      }
-    } catch (err) {
-      ElMessage.error("复制失败");
-      console.error("[CopyText] Copy failed.", err);
-    } finally {
-      document.body.removeChild(input);
-    }
-  }
-};
-
 const handleQueryClick = async () => {
   // 验证：必须至少选择一个分组（兜底保护）
   if (searchForm.value.groupBy.length === 0) {
@@ -871,11 +762,10 @@ const handleQueryClick = async () => {
   const searchData = {
     date: searchForm.value.date,
     platforms: searchForm.value.platforms,
-    channelIds: searchForm.value.channelIds,
     gameIds: searchForm.value.gameIds,
     groupBy: searchForm.value.groupBy,
-    // 过滤掉 cvr，只发送API支持的指标
-    metrics: searchForm.value.metrics.filter((m) => m !== "cvr"),
+    // 过滤掉 cvr 和 fill_rate，只发送API支持的指标
+    metrics: searchForm.value.metrics.filter((m) => m !== "cvr" && m !== "fill_rate"),
   };
   console.log("Search data:", searchData);
   await loadData(searchData);
@@ -964,8 +854,14 @@ const switchToCardMode = async () => {
   chartType.value = "line";
   chartDateRange.value = [];
 
-  // 初始化渠道数据（使用已加载的渠道选项）
-  stepData.channels = channelOptions.value;
+  // 加载渠道数据（卡片模式第一步需要选择渠道）
+  stepLoading.value = true;
+  try {
+    await loadChannelOptions();
+    stepData.channels = channelOptions.value;
+  } finally {
+    stepLoading.value = false;
+  }
   stepData.platforms = [];
   stepData.games = [];
 
@@ -975,11 +871,6 @@ const switchToCardMode = async () => {
 
 // 退出卡片模式
 const exitCardMode = async () => {
-  // 重新加载平台选项以恢复默认筛选
-  await loadPlatformOptions();
-  // 重新加载渠道和游戏选项
-  await loadChannelOptions();
-  await loadGameOptions();
   // 清空数据
   tableData.value = [];
   pagination.total = 0;
@@ -987,10 +878,9 @@ const exitCardMode = async () => {
   chartType.value = "line";
   chartDateRange.value = [];
   // 恢复默认筛选条件
-  searchForm.value.channelIds = [];
   searchForm.value.gameIds = [];
   searchForm.value.groupBy = ["report_date", "game_id", "channel_id"];
-  searchForm.value.metrics = ["spend", "impressions", "clicks", "installs", "ctr"];
+  searchForm.value.metrics = ["revenue", "impressions", "clicks", "fills", "requests", "ctr"];
   searchForm.value.date = [];
   // 切换到筛选模式
   viewMode.value = "filter";
@@ -1000,11 +890,6 @@ const exitCardMode = async () => {
 
 // 退出到筛选模式
 const exitToFilterMode = async () => {
-  // 重新加载平台选项以恢复默认筛选
-  await loadPlatformOptions();
-  // 重新加载渠道和游戏选项
-  await loadChannelOptions();
-  await loadGameOptions();
   // 清空数据
   tableData.value = [];
   pagination.total = 0;
@@ -1012,10 +897,9 @@ const exitToFilterMode = async () => {
   chartType.value = "line";
   chartDateRange.value = [];
   // 恢复默认筛选条件
-  searchForm.value.channelIds = [];
   searchForm.value.gameIds = [];
   searchForm.value.groupBy = ["report_date", "game_id", "channel_id"];
-  searchForm.value.metrics = ["spend", "impressions", "clicks", "installs", "ctr"];
+  searchForm.value.metrics = ["revenue", "impressions", "clicks", "fills", "requests", "ctr"];
   searchForm.value.date = [];
   // 切换到筛选模式
   viewMode.value = "filter";
@@ -1039,7 +923,7 @@ const selectChannel = async (channel) => {
   // 加载平台数据
   stepLoading.value = true;
   try {
-    const response = await AnalysisAPI.getPlatformsByChannel("UA", channel.value);
+    const response = await AnalysisAPI.getPlatformsByChannel("MON", channel.value);
     stepData.platforms = (response || []).map((item) => ({
       value: item.id,
       label: item.name,
@@ -1096,7 +980,7 @@ const selectFirstLevelGame = async (game) => {
   stepLoading.value = true;
   try {
     const response = await AnalysisAPI.getPlatformsByChannel(
-      "UA",
+      "MON",
       cardSelection.selectedChannel,
       game.value
     );
@@ -1196,7 +1080,7 @@ const prevStep = async () => {
         } else if (cardSelection.selectionMode === "platform-game") {
           // 加载平台数据
           const response = await AnalysisAPI.getPlatformsByChannel(
-            "UA",
+            "MON",
             cardSelection.selectedChannel
           );
           stepData.platforms = (response || []).map((item) => ({
@@ -1241,7 +1125,7 @@ const nextStep = async () => {
       stepLoading.value = true;
       try {
         const response = await AnalysisAPI.getPlatformsByChannel(
-          "UA",
+          "MON",
           cardSelection.selectedChannel
         );
         stepData.platforms = (response || []).map((item) => ({
@@ -1325,7 +1209,7 @@ const handleGameChange = async (gameId) => {
     stepLoading.value = true;
     try {
       const platformResponse = await AnalysisAPI.getPlatformsByChannel(
-        "UA",
+        "MON",
         cardSelection.selectedChannel,
         gameId
       );
@@ -1378,11 +1262,13 @@ const loadChartData = async (dateRange) => {
     const [dateStart, dateEnd] = dateRange;
 
     // 动态决定分组维度
-    const groupBy = ["report_date", "channel_id"];
+    const groupBy = ["report_date"];
     if (cardSelection.selectionMode === "game-platform") {
+      groupBy.push("channel_id");
       groupBy.push("game_id");
       if (cardSelection.selectedPlatform) groupBy.push("platform_id");
     } else if (cardSelection.selectionMode === "platform-game") {
+      groupBy.push("channel_id");
       groupBy.push("platform_id");
       if (cardSelection.selectedGame) groupBy.push("game_id");
     }
@@ -1393,9 +1279,10 @@ const loadChartData = async (dateRange) => {
         channel_ids: [cardSelection.selectedChannel],
         platform_ids: cardSelection.selectedPlatform ? [cardSelection.selectedPlatform] : [],
         game_ids: cardSelection.selectedGame ? [cardSelection.selectedGame] : [],
+        business_type: "MON",
       },
       group_by: groupBy,
-      metrics: ["spend", "impressions", "clicks", "installs", "ctr"],
+      metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr"],
       page: 1,
       size: 100,
     };
@@ -1413,14 +1300,19 @@ const loadChartData = async (dateRange) => {
       gameName: item.game_name || "",
       platform: item.platform_id || item.platform || "",
       platformName: item.platform_name || item.platformName || item.name || "",
-      spend: item.spend || 0,
+      revenue: item.revenue || 0,
       impressions: item.impressions || 0,
       clicks: item.clicks || 0,
-      installs: item.installs || 0,
-      cvr: calculateCVR(item),
+      fills: item.fills || 0,
+      requests: item.requests || 0,
+      fill_rate: calculateFillRate(item),
       ctr: formatCTR(item),
       dateRange: [dateStart, dateEnd],
-      ...Object.fromEntries(Object.entries(item).filter(([key]) => !["ctr", "cvr"].includes(key))),
+      ...Object.fromEntries(
+        Object.entries(item).filter(
+          ([key]) => !["ctr", "fill_rate", "revenue", "fills", "requests"].includes(key)
+        )
+      ),
     }));
 
     // 如果是游戏-平台方向且未选择平台，单独获取平台占比数据用于进度条
@@ -1467,16 +1359,14 @@ const canGoNext = computed(() => {
 const handleReset = async () => {
   // 重新加载平台选项并设置默认值
   await loadPlatformOptions();
-  await loadChannelOptions(); // 重新加载渠道选项
   await loadGameOptions(); // 重新加载游戏选项
 
   searchForm.value = {
     date: [],
-    platforms: searchForm.value.platforms, // 保持默认筛选（type=UA）
-    channelIds: [], // 重置为空（无默认筛选）
+    platforms: searchForm.value.platforms, // 保持默认筛选（type=MON）
     gameIds: [], // 重置为空（无默认筛选）
     groupBy: ["report_date", "game_id", "channel_id"],
-    metrics: ["spend", "impressions", "clicks", "installs", "ctr"],
+    metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr", "fill_rate"],
   };
   handleQueryClick();
 };
@@ -1514,10 +1404,15 @@ const loadData = async (params = {}) => {
   loading.value = true;
 
   try {
-    // 模拟API调用
+    // 过滤掉API不支持的指标（cvr 和 fill_rate）
+    const filteredMetrics = (params.metrics || searchForm.value.metrics).filter(
+      (m) => m !== "cvr" && m !== "fill_rate"
+    );
+
     const result = await indexAction({
       ...searchForm.value,
       ...params,
+      metrics: filteredMetrics,
       pageNum: pagination.currentPage,
       pageSize: pagination.pageSize,
     });
@@ -1536,7 +1431,7 @@ const loadData = async (params = {}) => {
 // 加载平台选项
 const loadPlatformOptions = async () => {
   try {
-    const response = await AnalysisAPI.getPlatformOptionsUA();
+    const response = await AnalysisAPI.getPlatformOptionsMON();
     // 转换数据格式：{id, name, code} -> {value, label, type}
     platformOptions.value = (response || []).map((item) => ({
       value: item.id, // 使用id作为value
@@ -1551,27 +1446,6 @@ const loadPlatformOptions = async () => {
   } catch (error) {
     console.error("获取平台列表失败:", error);
     ElMessage.error("获取平台列表失败");
-    return false;
-  }
-};
-
-// 加载渠道选项
-const loadChannelOptions = async () => {
-  try {
-    const response = await AnalysisAPI.getChannelOptions();
-    // 转换数据格式：{id, name, code} -> {value, label}
-    channelOptions.value = (response || []).map((item) => ({
-      value: item.id, // 使用id作为value
-      label: item.name, // 使用name作为label
-    }));
-
-    // 默认不筛选，保持为空
-    // searchForm.value.channelIds 已经是空数组
-
-    return true;
-  } catch (error) {
-    console.error("获取渠道列表失败:", error);
-    ElMessage.error("获取渠道列表失败");
     return false;
   }
 };
@@ -1597,23 +1471,23 @@ const loadGameOptions = async () => {
   }
 };
 
-// 加载计划选项
-const loadCampaignOptions = async () => {
+// 加载渠道选项
+const loadChannelOptions = async () => {
   try {
-    // TODO: 调用后端接口获取计划列表
-    // const response = await AnalysisAPI.getCampaignOptions();
-    // 临时使用静态数据或从现有数据提取
-    const response = []; // 暂时为空数组，待后端提供接口
-
-    campaignOptions.value = (response || []).map((item) => ({
-      value: item.campaign_name || item.name || String(item.id),
-      label: item.campaign_name || item.name || String(item.id),
+    const response = await AnalysisAPI.getChannelOptions();
+    // 转换数据格式：{id, name, code} -> {value, label}
+    channelOptions.value = (response || []).map((item) => ({
+      value: item.id, // 使用id作为value
+      label: item.name, // 使用name作为label
     }));
+
+    // 默认不筛选，保持为空
+    // searchForm.value.channelIds 已经是空数组
 
     return true;
   } catch (error) {
-    console.error("获取计划列表失败:", error);
-    ElMessage.error("获取计划列表失败");
+    console.error("获取渠道列表失败:", error);
+    ElMessage.error("获取渠道列表失败");
     return false;
   }
 };
@@ -1680,8 +1554,6 @@ onMounted(async () => {
   console.log("Component mounted");
   initDefaultDate(); // 设置默认日期范围（最近7天）
   await loadPlatformOptions(); // 加载平台选项
-  await loadCampaignOptions(); // 加载计划选项
-  await loadChannelOptions(); // 加载渠道选项
   await loadGameOptions(); // 加载游戏选项
   await loadData(); // 再加载数据
 });

@@ -407,5 +407,23 @@ const MiAdsAPI = {
       },
     });
   },
+
+  /**
+   * 删除广告（计划/组/创意）
+   * @param {number} businessType - 业务类型：1=广告计划, 2=广告组, 3=广告创意
+   * @param {number[]} ids - 广告ID列表
+   * @param {number} accountId - 账户ID
+   */
+  deleteAds(businessType, ids, accountId) {
+    return request({
+      url: `${MIADS_BASE_URL}/delete/ads`,
+      method: "post",
+      data: {
+        business_type: businessType,
+        ids: ids,
+        account_id: accountId,
+      },
+    });
+  },
 };
 export default MiAdsAPI;

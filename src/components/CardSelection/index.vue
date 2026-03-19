@@ -466,10 +466,10 @@ const shouldShowTooltip = (text) => {
 
   &::before {
     position: absolute;
-    top: 0;
+    top: 96%;
     right: 0;
     left: 0;
-    height: 3px;
+    height: 6px;
     content: "";
     background: linear-gradient(90deg, var(--el-color-primary), var(--el-color-success));
     transform: scaleX(0);
@@ -480,7 +480,7 @@ const shouldShowTooltip = (text) => {
     background: var(--el-color-primary-light-9);
     border-color: var(--el-color-primary);
     box-shadow: 0 8px 25px rgba(64, 128, 255, 0.15);
-    transform: translateY(-4px) scale(1.02);
+    transform: translateY(-30px) scale(1.02);
 
     &::before {
       transform: scaleX(1);
