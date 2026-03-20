@@ -9,7 +9,13 @@
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" style="padding: 20px">
       <el-form-item label="账户" prop="accountId">
-        <el-select v-model="form.accountId" placeholder="请选择账户" filterable style="width: 100%" disabled>
+        <el-select
+          v-model="form.accountId"
+          placeholder="请选择账户"
+          filterable
+          style="width: 100%"
+          disabled
+        >
           <el-option
             v-for="account in accountOptions"
             :key="account.value"
@@ -32,7 +38,7 @@
       </el-form-item>
 
       <el-form-item label="日预算(美元)">
-        <div style="display: flex; align-items: center; gap: 8px">
+        <div style="display: flex; gap: 8px; align-items: center">
           <el-select v-model="form.dayBudgetType" style="width: 100px">
             <el-option label="限定" value="limited" />
             <el-option label="不限" value="unlimited" />
@@ -51,7 +57,7 @@
       </el-form-item>
 
       <el-form-item label="总预算(美元)">
-        <div style="display: flex; align-items: center; gap: 8px">
+        <div style="display: flex; gap: 8px; align-items: center">
           <el-select v-model="form.totalBudgetType" style="width: 100px">
             <el-option label="限定" value="limited" />
             <el-option label="不限" value="unlimited" />
@@ -164,7 +170,7 @@ const handleSubmit = async () => {
       campaign_name: form.campaignName,
       campaign_type: form.campaignType,
       day_budget: dayBudgetValue,
-      total_budget: totalBudgetValue
+      total_budget: totalBudgetValue,
     };
 
     await MiAdsAPI.createCampaign(submitData);

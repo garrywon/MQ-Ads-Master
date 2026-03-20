@@ -344,14 +344,14 @@ const handleDelete = (row) => {
       .el-table__row {
         td.el-table__cell {
           padding: 12px 0;
+          overflow: visible !important;
           font-size: 14px;
           border-bottom: 1px solid var(--el-border-color-extra-light);
-          overflow: visible !important;
 
           .cell {
+            overflow: visible !important;
             font-variant-numeric: tabular-nums;
             line-height: 1.4;
-            overflow: visible !important;
           }
         }
       }
@@ -546,20 +546,20 @@ const handleDelete = (row) => {
   align-items: center;
 
   .action-btn {
+    height: auto !important;
+    min-height: auto !important;
     padding: 4px 16px !important;
     font-size: 13px !important;
-    border-radius: 4px !important;
-    min-height: auto !important;
-    height: auto !important;
     line-height: 1.4;
+
+    color: var(--el-text-color-regular) !important;
+    cursor: pointer;
 
     background: transparent !important;
     border: none !important;
+    border-radius: 4px !important;
     box-shadow: none !important;
-
-    color: var(--el-text-color-regular) !important;
     transition: all 250ms ease !important;
-    cursor: pointer;
 
     .el-icon {
       margin-right: 4px;

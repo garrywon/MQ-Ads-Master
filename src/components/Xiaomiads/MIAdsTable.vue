@@ -64,7 +64,7 @@
 
         <!-- 状态列（开关） -->
         <template v-else-if="col.prop === 'status'" #default="{ row }">
-          <div style="display: flex; align-items: center; justify-content: center; gap: 8px">
+          <div style="display: flex; gap: 8px; align-items: center; justify-content: center">
             <el-switch
               :model-value="row.status === 0"
               :disabled="row.statusUpdating"
@@ -94,11 +94,11 @@
         <template v-else-if="col.prop === 'dayBudget'" #default="{ row }">
           <div
             style="
+              position: relative;
               display: flex;
+              gap: 4px;
               align-items: center;
               justify-content: center;
-              gap: 4px;
-              position: relative;
               width: 100%;
             "
           >
@@ -109,7 +109,7 @@
               :class="{
                 'is-editing-other': editingRowId !== null && editingRowId !== row.campaignId,
               }"
-              style="cursor: pointer; color: #409eff"
+              style="color: #409eff; cursor: pointer"
               @click="startBudgetEdit(row)"
             >
               <Edit />
@@ -430,9 +430,9 @@ const handleDelete = async (row) => {
     --el-table-header-text-color: var(--el-text-color-regular);
     --el-table-row-hover-bg-color: var(--el-fill-color-light);
     --el-table-border-color: transparent;
+    z-index: 1;
     overflow: visible;
     border-radius: 0 0 12px 12px;
-    z-index: 1;
 
     &::before {
       display: none;
@@ -440,29 +440,29 @@ const handleDelete = async (row) => {
 
     .el-table__header-wrapper {
       th.el-table__cell {
+        z-index: auto !important;
         padding: 12px 0;
         font-size: 13px;
         font-weight: 600;
         color: var(--el-table-header-text-color);
         background-color: var(--el-table-header-bg-color) !important;
         border-bottom: 1px solid var(--el-border-color-lighter);
-        z-index: auto !important;
       }
     }
 
     .el-table__body-wrapper {
       .el-table__row {
         td.el-table__cell {
+          z-index: auto !important;
           padding: 12px 0;
+          overflow: visible !important;
           font-size: 14px;
           border-bottom: 1px solid var(--el-border-color-extra-light);
-          overflow: visible !important;
-          z-index: auto !important;
 
           .cell {
+            overflow: visible !important;
             font-variant-numeric: tabular-nums;
             line-height: 1.4;
-            overflow: visible !important;
           }
         }
       }
@@ -505,8 +505,8 @@ const handleDelete = async (row) => {
     .el-tabs__item {
       font-size: 14px;
       font-weight: 500;
-      transition: all 0.2s linear;
       background: var(--el-bg-color-overlay);
+      transition: all 0.2s linear;
     }
     #tab-campaign {
       border-radius: 12px 0 0 0;
@@ -578,19 +578,19 @@ const handleDelete = async (row) => {
   align-items: center;
 
   .action-btn {
+    height: auto !important;
+    min-height: auto !important;
     padding: 2px 6px !important;
     font-size: 15px !important;
-    border-radius: 4px !important;
-    min-height: auto !important;
-    height: auto !important;
     line-height: 1.4;
+    color: var(--el-text-color-regular) !important;
     white-space: nowrap;
+    cursor: pointer;
     background: transparent !important;
     border: none !important;
+    border-radius: 4px !important;
     box-shadow: none !important;
-    color: var(--el-text-color-regular) !important;
     transition: all 250ms ease !important;
-    cursor: pointer;
 
     .el-icon {
       margin-right: 4px;
@@ -621,8 +621,8 @@ const handleDelete = async (row) => {
   }
 
   .action-btn-delete {
-    color: var(--el-color-danger) !important;
     margin: 0;
+    color: var(--el-color-danger) !important;
     &:hover {
       color: var(--el-text-color-regular) !important;
       background: var(--el-color-danger-light-9) !important;
@@ -636,29 +636,29 @@ const handleDelete = async (row) => {
 
 .custom-budget-popover {
   position: absolute;
-  z-index: 100000;
-  right: 0;
   top: 50%;
-  transform: translateY(-50%);
+  right: 0;
+  z-index: 100000;
+  width: auto;
+  min-width: 200px;
+  padding: 12px;
   background: var(--el-bg-color-overlay, #fff);
   border: 1px solid var(--el-border-color-light);
   border-radius: 4px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-  padding: 12px;
-  width: auto;
-  min-width: 200px;
+  transform: translateY(-50%);
 }
 
 .budget-popover-content {
   display: flex;
-  align-items: center;
   gap: 12px;
+  align-items: center;
 }
 
 .budget-popover-row {
   display: flex;
-  align-items: center;
   gap: 8px;
+  align-items: center;
 }
 
 .budget-popover-buttons {

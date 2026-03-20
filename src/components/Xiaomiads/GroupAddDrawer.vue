@@ -10,238 +10,241 @@
     <el-form ref="formRef" :model="form" :rules="rules" label-width="120px" style="padding: 20px">
       <div class="input-container">
         <el-form-item label="账户" prop="accountId">
-        <el-select v-model="form.accountId" placeholder="请选择账户" filterable style="width: 100%">
-          <el-option
-            v-for="account in accountOptions"
-            :key="account.value"
-            :label="account.label"
-            :value="account.value"
-          />
-        </el-select>
-      </el-form-item>
+          <el-select
+            v-model="form.accountId"
+            placeholder="请选择账户"
+            filterable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="account in accountOptions"
+              :key="account.value"
+              :label="account.label"
+              :value="account.value"
+            />
+          </el-select>
+        </el-form-item>
 
-      <el-form-item label="广告计划" prop="campaignId">
-        <el-select
-          v-model="form.campaignId"
-          placeholder="请选择计划"
-          filterable
-          style="width: 100%"
-          @change="handleCampaignChange"
-        >
-          <el-option
-            v-for="campaign in campaignOptions"
-            :key="campaign.value"
-            :label="campaign.label"
-            :value="campaign.value"
-          />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="广告组名称" prop="groupName">
-        <el-input v-model="form.groupName" placeholder="请输入广告组名称" clearable />
-      </el-form-item>
+        <el-form-item label="广告计划" prop="campaignId">
+          <el-select
+            v-model="form.campaignId"
+            placeholder="请选择计划"
+            filterable
+            style="width: 100%"
+            @change="handleCampaignChange"
+          >
+            <el-option
+              v-for="campaign in campaignOptions"
+              :key="campaign.value"
+              :label="campaign.label"
+              :value="campaign.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="广告组名称" prop="groupName">
+          <el-input v-model="form.groupName" placeholder="请输入广告组名称" clearable />
+        </el-form-item>
       </div>
-
 
       <div class="input-container mbt-10">
         <el-form-item label="推广产品" prop="productType">
-        <el-select v-model="form.productType" placeholder="请选择推广产品" style="width: 100%">
-          <el-option label="GA" :value="1" />
-          <el-option label="GP" :value="2" />
-        </el-select>
-      </el-form-item>
+          <el-select v-model="form.productType" placeholder="请选择推广产品" style="width: 100%">
+            <el-option label="GA" :value="1" />
+            <el-option label="GP" :value="2" />
+          </el-select>
+        </el-form-item>
 
-      <el-form-item label="包名" prop="packageName">
-        <el-input v-model="form.packageName" placeholder="请输入包名" clearable />
-      </el-form-item>
+        <el-form-item label="包名" prop="packageName">
+          <el-input v-model="form.packageName" placeholder="请输入包名" clearable />
+        </el-form-item>
       </div>
 
       <div class="input-container mbt-10">
         <el-form-item label="日预算(美元)">
-        <div style="display: flex; align-items: center; gap: 8px">
-          <el-select v-model="form.dayBudgetType" style="width: 100px">
-            <el-option label="限定" value="limited" />
-            <el-option label="不限" value="unlimited" />
-          </el-select>
-          <el-input-number
-            v-if="form.dayBudgetType === 'limited'"
-            v-model="form.dayBudget"
-            :min="50"
-            :precision="2"
-            :step="100"
-            style="width: 200px"
-            placeholder="请输入日预算（≥50）"
-          />
-          <span v-else style="color: var(--el-text-color-secondary)">不限</span>
-        </div>
-      </el-form-item>
+          <div style="display: flex; gap: 8px; align-items: center">
+            <el-select v-model="form.dayBudgetType" style="width: 100px">
+              <el-option label="限定" value="limited" />
+              <el-option label="不限" value="unlimited" />
+            </el-select>
+            <el-input-number
+              v-if="form.dayBudgetType === 'limited'"
+              v-model="form.dayBudget"
+              :min="50"
+              :precision="2"
+              :step="100"
+              style="width: 200px"
+              placeholder="请输入日预算（≥50）"
+            />
+            <span v-else style="color: var(--el-text-color-secondary)">不限</span>
+          </div>
+        </el-form-item>
 
-      <el-form-item label="总预算(美元)">
-        <div style="display: flex; align-items: center; gap: 8px">
-          <el-select v-model="form.totalBudgetType" style="width: 100px">
-            <el-option label="限定" value="limited" />
-            <el-option label="不限" value="unlimited" />
-          </el-select>
-          <el-input-number
-            v-if="form.totalBudgetType === 'limited'"
-            v-model="form.totalBudget"
-            :min="50"
-            :precision="2"
-            :step="100"
-            style="width: 200px"
-            placeholder="请输入总预算（≥50）"
-          />
-          <span v-else style="color: var(--el-text-color-secondary)">不限</span>
-        </div>
-      </el-form-item>
+        <el-form-item label="总预算(美元)">
+          <div style="display: flex; gap: 8px; align-items: center">
+            <el-select v-model="form.totalBudgetType" style="width: 100px">
+              <el-option label="限定" value="limited" />
+              <el-option label="不限" value="unlimited" />
+            </el-select>
+            <el-input-number
+              v-if="form.totalBudgetType === 'limited'"
+              v-model="form.totalBudget"
+              :min="50"
+              :precision="2"
+              :step="100"
+              style="width: 200px"
+              placeholder="请输入总预算（≥50）"
+            />
+            <span v-else style="color: var(--el-text-color-secondary)">不限</span>
+          </div>
+        </el-form-item>
       </div>
 
       <div class="input-container mbt-10">
         <el-form-item label="投放时间">
-        <el-date-picker
-          v-model="form.timeRange"
-          type="datetimerange"
-          range-separator="至"
-          start-placeholder="开始时间"
-          end-placeholder="结束时间"
-          style="width: 100%"
-          value-format="x"
-        />
-      </el-form-item>
-
-      <el-form-item label="投放国家" prop="regions">
-        <el-select
-          v-model="form.regions"
-          multiple
-          filterable
-          collapse-tags
-          collapse-tags-tooltip
-          placeholder="请选择投放国家"
-          style="width: 100%"
-        >
-          <el-option
-            v-for="region in regionsOptions"
-            :key="region.id"
-            :label="region.name"
-            :value="region.id"
+          <el-date-picker
+            v-model="form.timeRange"
+            type="datetimerange"
+            range-separator="至"
+            start-placeholder="开始时间"
+            end-placeholder="结束时间"
+            style="width: 100%"
+            value-format="x"
           />
-        </el-select>
+        </el-form-item>
 
-        <!-- 已选国家展示 -->
-        <div
-          v-if="selectedRegions.length > 0"
-          style="margin-top: 12px; max-height: 150px; overflow-y: auto; width: 100%"
-        >
-          <div style="margin-bottom: 8px; font-size: 12px; color: var(--el-text-color-secondary)">
-            已选择 {{ selectedRegions.length }} 个国家/地区
-          </div>
-          <div style="display: flex; flex-wrap: wrap; gap: 8px">
-            <el-tag
-              v-for="region in selectedRegions"
+        <el-form-item label="投放国家" prop="regions">
+          <el-select
+            v-model="form.regions"
+            multiple
+            filterable
+            collapse-tags
+            collapse-tags-tooltip
+            placeholder="请选择投放国家"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="region in regionsOptions"
               :key="region.id"
-              closable
-              @close="removeRegion(region.id)"
-              size="small"
-            >
-              {{ region.name }}
-            </el-tag>
-          </div>
-        </div>
+              :label="region.name"
+              :value="region.id"
+            />
+          </el-select>
 
-        <!-- 全选/清空操作 -->
-        <div
-          v-if="regionsOptions.length > 0"
-          style="margin-top: 12px; display: flex; align-items: center; gap: 12px; width: 100%"
-        >
-          <el-checkbox
-            :model-value="
-              form.regions.length === regionsOptions.length && regionsOptions.length > 0
-            "
-            @change="toggleSelectAllRegions"
+          <!-- 已选国家展示 -->
+          <div
+            v-if="selectedRegions.length > 0"
+            style="width: 100%; max-height: 150px; margin-top: 12px; overflow-y: auto"
           >
-            全选
-          </el-checkbox>
-          <el-button
-            v-if="form.regions.length > 0"
-            type="danger"
-            size="small"
-            @click="clearAllRegions"
+            <div style="margin-bottom: 8px; font-size: 12px; color: var(--el-text-color-secondary)">
+              已选择 {{ selectedRegions.length }} 个国家/地区
+            </div>
+            <div style="display: flex; flex-wrap: wrap; gap: 8px">
+              <el-tag
+                v-for="region in selectedRegions"
+                :key="region.id"
+                closable
+                @close="removeRegion(region.id)"
+                size="small"
+              >
+                {{ region.name }}
+              </el-tag>
+            </div>
+          </div>
+
+          <!-- 全选/清空操作 -->
+          <div
+            v-if="regionsOptions.length > 0"
+            style="display: flex; gap: 12px; align-items: center; width: 100%; margin-top: 12px"
           >
-            <el-icon><Delete /></el-icon>
-            <span>清空</span>
-          </el-button>
-        </div>
-      </el-form-item>
+            <el-checkbox
+              :model-value="
+                form.regions.length === regionsOptions.length && regionsOptions.length > 0
+              "
+              @change="toggleSelectAllRegions"
+            >
+              全选
+            </el-checkbox>
+            <el-button
+              v-if="form.regions.length > 0"
+              type="danger"
+              size="small"
+              @click="clearAllRegions"
+            >
+              <el-icon><Delete /></el-icon>
+              <span>清空</span>
+            </el-button>
+          </div>
+        </el-form-item>
       </div>
 
       <div class="input-container mbt-10">
         <el-form-item label="版位选择" prop="placementType">
-        <el-select v-model="form.placementType" placeholder="请选择版位" style="width: 100%">
-          <el-option label="通投智选" :value="1" />
-          <el-option label="自选版位" :value="2" />
-        </el-select>
-      </el-form-item>
+          <el-select v-model="form.placementType" placeholder="请选择版位" style="width: 100%">
+            <el-option label="通投智选" :value="1" />
+            <el-option label="自选版位" :value="2" />
+          </el-select>
+        </el-form-item>
 
-      <el-form-item label="细分版位" prop="displayType" v-if="form.placementType === 2">
-        <el-select v-model="form.displayType" placeholder="请选择细分版位" style="width: 100%">
-          <el-option
-            v-for="dt in filteredDisplayTypeOptions"
-            :key="dt.value"
-            :label="dt.label"
-            :value="dt.value"
-          />
-        </el-select>
-      </el-form-item>
+        <el-form-item label="细分版位" prop="displayType" v-if="form.placementType === 2">
+          <el-select v-model="form.displayType" placeholder="请选择细分版位" style="width: 100%">
+            <el-option
+              v-for="dt in filteredDisplayTypeOptions"
+              :key="dt.value"
+              :label="dt.label"
+              :value="dt.value"
+            />
+          </el-select>
+        </el-form-item>
       </div>
 
       <div class="input-container mbt-10">
         <el-form-item label="优化目标" prop="optimizeGoal">
-        <el-select v-model="form.optimizeGoal" placeholder="请选择优化目标" style="width: 100%">
-          <el-option label="激活" :value="1" />
-          <el-option label="点击" :value="2" />
-          <el-option label="转化价值" :value="4" />
-        </el-select>
-      </el-form-item>
-      <el-form-item label="优化事件" prop="optimizeEvent" v-if="form.optimizeGoal === 4">
-        <el-select v-model="form.optimizeEvent" placeholder="请选择优化事件" style="width: 100%">
-          <el-option label="广告收入价值" :value="1" />
-        </el-select>
-      </el-form-item>
+          <el-select v-model="form.optimizeGoal" placeholder="请选择优化目标" style="width: 100%">
+            <el-option label="激活" :value="1" />
+            <el-option label="点击" :value="2" />
+            <el-option label="转化价值" :value="4" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="优化事件" prop="optimizeEvent" v-if="form.optimizeGoal === 4">
+          <el-select v-model="form.optimizeEvent" placeholder="请选择优化事件" style="width: 100%">
+            <el-option label="广告收入价值" :value="1" />
+          </el-select>
+        </el-form-item>
 
-      <el-form-item label="出价类型" prop="billingType">
-        <el-select v-model="form.billingType" placeholder="请选择出价类型" style="width: 100%">
-          <el-option label="CPC" :value="2" />
-        </el-select>
-      </el-form-item>
+        <el-form-item label="出价类型" prop="billingType">
+          <el-select v-model="form.billingType" placeholder="请选择出价类型" style="width: 100%">
+            <el-option label="CPC" :value="2" />
+          </el-select>
+        </el-form-item>
 
-      <el-form-item label="目标成本" prop="targetCost" v-if="form.optimizeGoal === 1">
-        <div style="display: flex; align-items: center; gap: 8px">
-          <el-input-number
-            v-model="form.targetCost"
-            :min="0"
-            :precision="4"
-            :step="1"
-            :controls="false"
-            style="flex: 1"
-          />
-          <span style="color: var(--el-text-color-secondary); white-space: nowrap">USD/激活</span>
-        </div>
-      </el-form-item>
+        <el-form-item label="目标成本" prop="targetCost" v-if="form.optimizeGoal === 1">
+          <div style="display: flex; gap: 8px; align-items: center">
+            <el-input-number
+              v-model="form.targetCost"
+              :min="0"
+              :precision="4"
+              :step="1"
+              :controls="false"
+              style="flex: 1"
+            />
+            <span style="color: var(--el-text-color-secondary); white-space: nowrap">USD/激活</span>
+          </div>
+        </el-form-item>
 
-      <el-form-item label="目标成本" prop="targetCost" v-if="form.optimizeGoal === 2">
-        <div style="display: flex; align-items: center; gap: 8px">
-          <el-input-number
-            v-model="form.targetCost"
-            :min="0"
-            :precision="4"
-            :step="1"
-            :controls="false"
-            style="flex: 1"
-          />
-          <span style="color: var(--el-text-color-secondary); white-space: nowrap">USD/点击</span>
-        </div>
-      </el-form-item>
+        <el-form-item label="目标成本" prop="targetCost" v-if="form.optimizeGoal === 2">
+          <div style="display: flex; gap: 8px; align-items: center">
+            <el-input-number
+              v-model="form.targetCost"
+              :min="0"
+              :precision="4"
+              :step="1"
+              :controls="false"
+              style="flex: 1"
+            />
+            <span style="color: var(--el-text-color-secondary); white-space: nowrap">USD/点击</span>
+          </div>
+        </el-form-item>
       </div>
-    
     </el-form>
 
     <template #footer>
@@ -497,7 +500,7 @@ const handleSubmit = async () => {
 };
 </script>
 <style lang="scss" scoped>
-.first-container { 
+.first-container {
   margin: 0;
 }
 .mbt-10 {
@@ -514,8 +517,8 @@ const handleSubmit = async () => {
     margin: 16px;
   }
   :deep(.el-form-item__label) {
-    text-align: center;
     justify-content: center;
+    text-align: center;
   }
 
   &:hover {

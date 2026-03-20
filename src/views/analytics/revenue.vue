@@ -27,8 +27,8 @@
         <el-text
           class="function-bar-title"
           style="
-            margin: 0px;
             padding-right: 20px;
+            margin: 0px;
             border-right: 1px solid var(--el-border-color-lighter);
           "
         >
@@ -2311,15 +2311,15 @@ defineExpose({});
 
 // 指标复选框禁用状态样式（灰色半透明，明显区分）
 :deep(.el-checkbox-button.is-disabled) {
+  color: var(--el-text-color-disabled) !important;
   background-color: var(--el-fill-color-extra-light) !important;
   border-color: var(--el-border-color-lighter) !important;
-  color: var(--el-text-color-disabled) !important;
   opacity: 0.6;
 
   &:hover {
+    color: var(--el-text-color-disabled) !important;
     background-color: var(--el-fill-color-extra-light) !important;
     border-color: var(--el-border-color-lighter) !important;
-    color: var(--el-text-color-disabled) !important;
   }
 }
 </style>

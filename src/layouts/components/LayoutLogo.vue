@@ -2,7 +2,7 @@
   <div class="logo">
     <transition enter-active-class="animate__animated animate__fadeInLeft">
       <router-link :key="+collapse" class="wh-full flex-center" to="/">
-        <div class="i-svg:logo3" style="width: 30px; height: 30px;" />
+        <div class="i-svg:logo3" style="width: 30px; height: 30px" />
         <span v-if="!collapse" class="title">
           {{ appConfig.title }}
         </span>
@@ -27,8 +27,8 @@ defineProps({
 .logo {
   width: 100%;
   height: $navbar-height;
-  background-color: $sidebar-logo-background;
   color: $sidebar-logo-text-color;
+  background-color: $sidebar-logo-background;
 
   .title {
     flex-shrink: 0;
@@ -49,8 +49,8 @@ defineProps({
 .layout-top,
 .layout-mix {
   .logo {
-    background-color: transparent !important;
     color: var(--menu-text);
+    background-color: transparent !important;
 
     .title {
       color: inherit;

@@ -1,279 +1,285 @@
 <template>
   <div class="app-container">
     <!-- 功能区 - 筛选模式和列表模式显示 -->
-    <div v-if="viewMode === 'filter' || viewMode === 'list'" class="function-bar">
-      <div class="function-bar-title">功能区</div>
-      <div class="function-bar-content">
-        <!-- 筛选模式显示卡片模式按钮 -->
-        <el-button v-if="viewMode === 'filter'" type="primary" @click="switchToCardMode">
-          <el-icon><Grid /></el-icon>
-          卡片模式
-        </el-button>
-        <!-- 列表模式显示返回按钮 -->
-        <el-button v-if="viewMode === 'list'" type="primary" @click="switchToCardMode">
-          <el-icon><Grid /></el-icon>
-          重新选择
-        </el-button>
-        <el-button v-if="viewMode === 'list'" @click="exitToFilterMode">
-          <el-icon><ArrowLeft /></el-icon>
-          返回筛选模式
-        </el-button>
+    <Transition name="view-transition">
+      <div v-if="viewMode === 'filter' || viewMode === 'list'" class="function-bar">
+        <div class="function-bar-title">功能区</div>
+        <div class="function-bar-content">
+          <!-- 筛选模式显示卡片模式按钮 -->
+          <el-button v-if="viewMode === 'filter'" type="primary" @click="switchToCardMode">
+            <el-icon><Grid /></el-icon>
+            卡片模式
+          </el-button>
+          <!-- 列表模式显示返回按钮 -->
+          <el-button v-if="viewMode === 'list'" type="primary" @click="switchToCardMode">
+            <el-icon><Grid /></el-icon>
+            重新选择
+          </el-button>
+          <el-button v-if="viewMode === 'list'" @click="exitToFilterMode">
+            <el-icon><ArrowLeft /></el-icon>
+            返回筛选模式
+          </el-button>
+        </div>
       </div>
-    </div>
+    </Transition>
 
     <!-- 搜索区域 - 仅筛选模式显示 -->
-    <div v-if="viewMode === 'filter'" class="search-container mb-10">
-      <el-form :model="searchForm" inline label-width="auto">
-        <el-text
-          class="function-bar-title"
-          style="
-            margin: 0px;
-            padding-right: 20px;
-            border-right: 1px solid var(--el-border-color-lighter);
-          "
-        >
-          筛选区
-        </el-text>
-        <el-form-item>
-          <el-date-picker
-            v-model="searchForm.date"
-            type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            format="YYYY-MM-DD"
-            value-format="YYYY-MM-DD"
-            style="width: 255px"
-            :shortcuts="dateShortcuts"
-            @change="handleQueryClick"
-          />
-        </el-form-item>
-        <el-form-item label="平台">
-          <el-select
-            v-model="searchForm.platforms"
-            placeholder="请选择平台"
-            clearable
-            multiple
-            collapse-tags
-            collapse-tags-tooltip
-            style="width: 180px"
-            @change="handleQueryClick"
+    <Transition name="view-transition">
+      <div v-if="viewMode === 'filter'" class="search-container mb-10">
+        <el-form :model="searchForm" inline label-width="auto">
+          <el-text
+            class="function-bar-title"
+            style="
+              padding-right: 20px;
+              margin: 0px;
+              border-right: 1px solid var(--el-border-color-lighter);
+            "
           >
-            <el-option
-              v-for="item in platformOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
+            筛选区
+          </el-text>
+          <el-form-item>
+            <el-date-picker
+              v-model="searchForm.date"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              format="YYYY-MM-DD"
+              value-format="YYYY-MM-DD"
+              style="width: 255px"
+              :shortcuts="dateShortcuts"
+              @change="handleQueryClick"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="渠道">
-          <el-select
-            v-model="searchForm.channelIds"
-            placeholder="请选择渠道"
-            clearable
-            multiple
-            collapse-tags
-            collapse-tags-tooltip
-            style="width: 180px"
-            @change="handleQueryClick"
-          >
-            <el-option
-              v-for="item in channelOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="游戏">
-          <el-select
-            v-model="searchForm.gameIds"
-            placeholder="请选择游戏"
-            clearable
-            multiple
-            filterable
-            collapse-tags
-            collapse-tags-tooltip
-            style="width: 180px"
-            @change="handleQueryClick"
-          >
-            <el-option
-              v-for="item in gameOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="计划名称">
-          <el-select
-            v-model="searchForm.campaignNames"
-            placeholder="请选择计划名称"
-            clearable
-            multiple
-            collapse-tags
-            collapse-tags-tooltip
-            style="width: 180px"
-            @change="handleQueryClick"
-          >
-            <el-option
-              v-for="item in campaignOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="分组">
-          <el-select
-            v-model="searchForm.groupBy"
-            placeholder="请选择分组"
-            clearable
-            multiple
-            collapse-tags
-            collapse-tags-tooltip
-            style="width: 200px"
-            @change="handleGroupByChange"
-          >
-            <el-option
-              v-for="item in groupByOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.value"
-              :disabled="isLastGroupOptionDisabled(item.value)"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="指标">
-          <el-checkbox-group v-model="searchForm.metrics">
-            <el-checkbox-button
-              v-for="item in metricsOptions"
-              :key="item.value"
-              :value="item.value"
-              :disabled="isLastMetricDisabled(item.value)"
+          </el-form-item>
+          <el-form-item label="平台">
+            <el-select
+              v-model="searchForm.platforms"
+              placeholder="请选择平台"
+              clearable
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
+              style="width: 180px"
+              @change="handleQueryClick"
             >
-              {{ item.label }}
-            </el-checkbox-button>
-          </el-checkbox-group>
-        </el-form-item>
-        <el-form-item>
-          <el-button @click="handleReset">重置</el-button>
-          <el-button style="margin-left: 12px" @click="showColumnSetting = true">
-            <el-icon class="mr-1"><Setting /></el-icon>
-            列设置
-          </el-button>
-        </el-form-item>
-      </el-form>
-    </div>
+              <el-option
+                v-for="item in platformOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="渠道">
+            <el-select
+              v-model="searchForm.channelIds"
+              placeholder="请选择渠道"
+              clearable
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
+              style="width: 180px"
+              @change="handleQueryClick"
+            >
+              <el-option
+                v-for="item in channelOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="游戏">
+            <el-select
+              v-model="searchForm.gameIds"
+              placeholder="请选择游戏"
+              clearable
+              multiple
+              filterable
+              collapse-tags
+              collapse-tags-tooltip
+              style="width: 180px"
+              @change="handleQueryClick"
+            >
+              <el-option
+                v-for="item in gameOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="计划名称">
+            <el-select
+              v-model="searchForm.campaignNames"
+              placeholder="请选择计划名称"
+              clearable
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
+              style="width: 180px"
+              @change="handleQueryClick"
+            >
+              <el-option
+                v-for="item in campaignOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="分组">
+            <el-select
+              v-model="searchForm.groupBy"
+              placeholder="请选择分组"
+              clearable
+              multiple
+              collapse-tags
+              collapse-tags-tooltip
+              style="width: 200px"
+              @change="handleGroupByChange"
+            >
+              <el-option
+                v-for="item in groupByOptions"
+                :key="item.value"
+                :label="item.label"
+                :value="item.value"
+                :disabled="isLastGroupOptionDisabled(item.value)"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="指标">
+            <el-checkbox-group v-model="searchForm.metrics">
+              <el-checkbox-button
+                v-for="item in metricsOptions"
+                :key="item.value"
+                :value="item.value"
+                :disabled="isLastMetricDisabled(item.value)"
+              >
+                {{ item.label }}
+              </el-checkbox-button>
+            </el-checkbox-group>
+          </el-form-item>
+          <el-form-item>
+            <el-button @click="handleReset">重置</el-button>
+            <el-button style="margin-left: 12px" @click="showColumnSetting = true">
+              <el-icon class="mr-1"><Setting /></el-icon>
+              列设置
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </Transition>
 
     <!-- 筛选模式数据表格 -->
-    <div v-if="viewMode === 'filter'" class="table-container">
-      <el-table
-        ref="tableRef"
-        v-loading="loading"
-        :data="tableData"
-        v-bind="contentConfig.table"
-        :row-key="contentConfig.pk"
-        class="flex-1"
-        :border="false"
-        :highlight-current-row="false"
-        height="calc(100vh - 350px)"
-        show-summary
-        @selection-change="handleSelectionChange"
-      >
-        <el-table-column type="index" label="序号" width="60" align="center" fixed="left" />
-        <template v-for="col in finalColumns" :key="col.prop">
-          <el-table-column v-bind="col">
-            <!-- 自定义表头：为CTR和CVR添加提示图标 -->
-            <template #header>
-              {{ col.label }}
-            </template>
+    <Transition name="view-transition">
+      <div v-if="viewMode === 'filter'" class="table-container">
+        <el-table
+          ref="tableRef"
+          v-loading="loading"
+          :data="tableData"
+          v-bind="contentConfig.table"
+          :row-key="contentConfig.pk"
+          class="flex-1"
+          :border="false"
+          :highlight-current-row="false"
+          height="calc(100vh - 350px)"
+          show-summary
+          @selection-change="handleSelectionChange"
+        >
+          <el-table-column type="index" label="序号" width="60" align="center" fixed="left" />
+          <template v-for="col in finalColumns" :key="col.prop">
+            <el-table-column v-bind="col">
+              <!-- 自定义表头：为CTR和CVR添加提示图标 -->
+              <template #header>
+                {{ col.label }}
+              </template>
 
-            <template #default="scope">
-              <template v-if="col.prop === 'packageName'">
-                <span
-                  class="copyable-text"
-                  :class="{ 'text-muted': !scope.row.packageName }"
-                  @click="copyText(scope.row.packageName)"
+              <template #default="scope">
+                <template v-if="col.prop === 'packageName'">
+                  <span
+                    class="copyable-text"
+                    :class="{ 'text-muted': !scope.row.packageName }"
+                    @click="copyText(scope.row.packageName)"
+                    :style="{
+                      cursor: scope.row.packageName ? 'pointer' : 'default',
+                      color: scope.row.packageName ? 'var(--el-color-primary)' : '',
+                    }"
+                  >
+                    {{ scope.row.packageName || "-" }}
+                  </span>
+                </template>
+                <template v-else-if="col.prop === 'gameName'">
+                  <span
+                    class="copyable-text"
+                    :class="{ 'text-muted': !scope.row.gameName }"
+                    @click="copyText(scope.row.gameName)"
+                    :style="{
+                      cursor: scope.row.gameName ? 'pointer' : 'default',
+                      color: scope.row.gameName ? 'var(--el-color-primary)' : '',
+                    }"
+                  >
+                    {{ scope.row.gameName || "-" }}
+                  </span>
+                </template>
+                <template v-else-if="col.slotName === 'spend'">
+                  <el-text type="danger">{{ formatNumber(scope.row[col.prop]) }}</el-text>
+                </template>
+                <template v-else-if="col.slotName === 'platform'">
+                  <el-tag :type="getPlatformTag(scope.row[col.prop])">
+                    {{ scope.row[col.prop] }}
+                  </el-tag>
+                </template>
+                <template v-else-if="col.slotName === 'channel'">
+                  <el-tag :type="getChannelTag(scope.row[col.prop])">
+                    {{ scope.row[col.prop] }}
+                  </el-tag>
+                </template>
+                <template v-else>
+                  <span :class="{ 'text-muted': !scope.row[col.prop] }">
+                    {{ scope.row[col.prop] || "-" }}
+                  </span>
+                </template>
+              </template>
+            </el-table-column>
+          </template>
+          <!-- 总计行 -->
+          <template #summary>
+            <tr>
+              <!-- 序号列：显示"总计" -->
+              <td class="el-table__cell" align="center" style="width: 120px">总计</td>
+              <!-- 图标列：显示"-" -->
+              <td class="el-table__cell" align="center" style="width: 80px">-</td>
+              <!-- 动态列：根据 finalColumns 生成 -->
+              <template v-for="col in finalColumns" :key="col.prop">
+                <td
+                  class="el-table__cell"
+                  :align="col.align || 'center'"
                   :style="{
-                    cursor: scope.row.packageName ? 'pointer' : 'default',
-                    color: scope.row.packageName ? 'var(--el-color-primary)' : '',
+                    width: col.width ? `${col.width}px` : undefined,
+                    minWidth: col.minWidth ? `${col.minWidth}px` : undefined,
                   }"
                 >
-                  {{ scope.row.packageName || "-" }}
-                </span>
+                  <span v-if="isNumericColumn(col.prop)">
+                    {{ formatSummaryValue(col.prop) }}
+                  </span>
+                  <span v-else>-</span>
+                </td>
               </template>
-              <template v-else-if="col.prop === 'gameName'">
-                <span
-                  class="copyable-text"
-                  :class="{ 'text-muted': !scope.row.gameName }"
-                  @click="copyText(scope.row.gameName)"
-                  :style="{
-                    cursor: scope.row.gameName ? 'pointer' : 'default',
-                    color: scope.row.gameName ? 'var(--el-color-primary)' : '',
-                  }"
-                >
-                  {{ scope.row.gameName || "-" }}
-                </span>
-              </template>
-              <template v-else-if="col.slotName === 'spend'">
-                <el-text type="danger">{{ formatNumber(scope.row[col.prop]) }}</el-text>
-              </template>
-              <template v-else-if="col.slotName === 'platform'">
-                <el-tag :type="getPlatformTag(scope.row[col.prop])">
-                  {{ scope.row[col.prop] }}
-                </el-tag>
-              </template>
-              <template v-else-if="col.slotName === 'channel'">
-                <el-tag :type="getChannelTag(scope.row[col.prop])">
-                  {{ scope.row[col.prop] }}
-                </el-tag>
-              </template>
-              <template v-else>
-                <span :class="{ 'text-muted': !scope.row[col.prop] }">
-                  {{ scope.row[col.prop] || "-" }}
-                </span>
-              </template>
-            </template>
-          </el-table-column>
-        </template>
-        <!-- 总计行 -->
-        <template #summary>
-          <tr>
-            <!-- 序号列：显示"总计" -->
-            <td class="el-table__cell" align="center" style="width: 120px">总计</td>
-            <!-- 图标列：显示"-" -->
-            <td class="el-table__cell" align="center" style="width: 80px">-</td>
-            <!-- 动态列：根据 finalColumns 生成 -->
-            <template v-for="col in finalColumns" :key="col.prop">
-              <td
-                class="el-table__cell"
-                :align="col.align || 'center'"
-                :style="{
-                  width: col.width ? `${col.width}px` : undefined,
-                  minWidth: col.minWidth ? `${col.minWidth}px` : undefined,
-                }"
-              >
-                <span v-if="isNumericColumn(col.prop)">
-                  {{ formatSummaryValue(col.prop) }}
-                </span>
-                <span v-else>-</span>
-              </td>
-            </template>
-          </tr>
-        </template>
-      </el-table>
+            </tr>
+          </template>
+        </el-table>
 
-      <!-- 分页 -->
-      <div v-if="showPagination" class="mt-4 flex justify-center">
-        <el-pagination
-          v-bind="pagination"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+        <!-- 分页 -->
+        <div v-if="showPagination" class="mt-4 flex justify-center">
+          <el-pagination
+            v-bind="pagination"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
+        </div>
       </div>
-    </div>
+    </Transition>
 
     <!-- 列设置对话框 -->
     <el-dialog
@@ -311,27 +317,29 @@
     />
 
     <!-- 图表展示模块 -->
-    <ChartDisplay
-      v-if="viewMode === 'list'"
-      :table-data="tableData"
-      :is-loading="loading"
-      :chart-type="chartType"
-      :date-range="chartDateRange"
-      :card-selection="cardSelection"
-      :metric="chartMetric"
-      :platform-options="stepData.platforms"
-      :selected-platform="cardSelection.selectedPlatform"
-      :game-options="stepData.games"
-      :selected-game="cardSelection.selectedGame"
-      :show-platform-filter="cardSelection.showPlatformFilter"
-      :show-game-filter="cardSelection.showGameFilter"
-      @update:chart-type="handleChartTypeChange"
-      @update:date-range="handleChartDateRangeChange"
-      @update:metric="handleChartMetricChange"
-      @update:selected-platform="handlePlatformChange"
-      @update:selected-game="handleGameChange"
-      @refresh="handleChartRefresh"
-    />
+    <Transition name="view-transition">
+      <ChartDisplay
+        v-if="viewMode === 'list'"
+        :table-data="tableData"
+        :is-loading="loading"
+        :chart-type="chartType"
+        :date-range="chartDateRange"
+        :card-selection="cardSelection"
+        :metric="chartMetric"
+        :platform-options="stepData.platforms"
+        :selected-platform="cardSelection.selectedPlatform"
+        :game-options="stepData.games"
+        :selected-game="cardSelection.selectedGame"
+        :show-platform-filter="cardSelection.showPlatformFilter"
+        :show-game-filter="cardSelection.showGameFilter"
+        @update:chart-type="handleChartTypeChange"
+        @update:date-range="handleChartDateRangeChange"
+        @update:metric="handleChartMetricChange"
+        @update:selected-platform="handlePlatformChange"
+        @update:selected-game="handleGameChange"
+        @refresh="handleChartRefresh"
+      />
+    </Transition>
 
     <!-- 卡片选择模式 -->
     <CardSelection
@@ -714,6 +722,7 @@ const indexAction = async (params) => {
       },
       // 过滤条件 (可选)
       filters: {
+        business_type: "UA",
         ...(params &&
           params.platforms &&
           params.platforms.length > 0 && { platform_ids: params.platforms }),
@@ -728,11 +737,6 @@ const indexAction = async (params) => {
       // 分组字段 (可选)
       group_by:
         params && params.groupBy && params.groupBy.length > 0 ? params.groupBy : ["report_date"],
-      // 指标字段 (可选)
-      metrics:
-        params && params.metrics && params.metrics.length > 0
-          ? params.metrics
-          : ["spend", "impressions", "clicks", "installs", "revenue", "ctr"],
       // 分页参数 (可选)
       page: params && typeof params.pageNum === "number" ? params.pageNum : 1,
       size: params && typeof params.pageSize === "number" ? params.pageSize : 10,
@@ -765,7 +769,7 @@ const indexAction = async (params) => {
           id: index + 1,
           // 映射API字段到表格字段
           date: item.report_date || "",
-          channel: item.channel_id || "",
+          channel: item.channel_name || "",
           packageName: item.package_name || "",
           gameName: item.game_name || "",
           // 新增字段
@@ -874,8 +878,6 @@ const handleQueryClick = async () => {
     channelIds: searchForm.value.channelIds,
     gameIds: searchForm.value.gameIds,
     groupBy: searchForm.value.groupBy,
-    // 过滤掉 cvr，只发送API支持的指标
-    metrics: searchForm.value.metrics.filter((m) => m !== "cvr"),
   };
   console.log("Search data:", searchData);
   await loadData(searchData);
@@ -1390,12 +1392,12 @@ const loadChartData = async (dateRange) => {
     const apiParams = {
       date_range: { start: dateStart, end: dateEnd },
       filters: {
+        business_type: "UA",
         channel_ids: [cardSelection.selectedChannel],
         platform_ids: cardSelection.selectedPlatform ? [cardSelection.selectedPlatform] : [],
         game_ids: cardSelection.selectedGame ? [cardSelection.selectedGame] : [],
       },
       group_by: groupBy,
-      metrics: ["spend", "impressions", "clicks", "installs", "ctr"],
       page: 1,
       size: 100,
     };
@@ -1408,7 +1410,7 @@ const loadChartData = async (dateRange) => {
     tableData.value = rawData.map((item, index) => ({
       id: index + 1,
       date: item.report_date || "",
-      channel: item.channel_id || "",
+      channel: item.channel_name || "",
       packageName: item.package_name || "",
       gameName: item.game_name || "",
       platform: item.platform_id || item.platform || "",
@@ -1515,8 +1517,9 @@ const loadData = async (params = {}) => {
 
   try {
     // 模拟API调用
+    const { metrics, ...restForm } = searchForm.value;
     const result = await indexAction({
-      ...searchForm.value,
+      ...restForm,
       ...params,
       pageNum: pagination.currentPage,
       pageSize: pagination.pageSize,
@@ -1712,48 +1715,35 @@ defineExpose({});
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
+  position: relative;
+  z-index: 1;
+}
+// 表头样式
+.el-table__header-wrapper {
+  th.el-table__cell {
+    padding: 12px 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--el-table-header-text-color);
+    background-color: var(--el-table-header-bg-color) !important;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+  }
+}
 
-  // 极简高级表格样式（适配暗色/亮色模式）
-  :deep(.el-table) {
-    // 使用 Element Plus 自适应颜色变量
-    --el-table-header-bg-color: var(--el-fill-color-light);
-    --el-table-header-text-color: var(--el-text-color-regular);
-    --el-table-row-hover-bg-color: var(--el-fill-color-light);
-    --el-table-border-color: transparent;
-    overflow: auto;
+// 单元格样式 - 保持居中
+.el-table__body-wrapper {
+  overflow: visible;
 
-    border-radius: 12px;
+  .el-table__row {
+    td.el-table__cell {
+      padding: 12px 0;
+      font-size: 14px;
+      border-bottom: 1px solid var(--el-border-color-extra-light);
 
-    // 隐藏底部粗线
-    &::before {
-      display: none;
-    }
-
-    // 表头样式
-    .el-table__header-wrapper {
-      th.el-table__cell {
-        padding: 12px 0;
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--el-table-header-text-color);
-        background-color: var(--el-table-header-bg-color) !important;
-        border-bottom: 1px solid var(--el-border-color-lighter);
-      }
-    }
-
-    // 单元格样式 - 保持居中
-    .el-table__body-wrapper {
-      .el-table__row {
-        td.el-table__cell {
-          padding: 12px 0;
-          font-size: 14px;
-          border-bottom: 1px solid var(--el-border-color-extra-light);
-
-          .cell {
-            font-variant-numeric: tabular-nums; /* 数字等宽对齐 */
-            line-height: 1.4;
-          }
-        }
+      .cell {
+        font-variant-numeric: tabular-nums; /* 数字等宽对齐 */
+        line-height: 1.4;
       }
     }
   }
@@ -1882,10 +1872,16 @@ defineExpose({});
 // 表格行悬停效果
 :deep(.el-table__row) {
   transition: all 0.2s linear;
+  position: relative;
+  z-index: 1;
 
   &:hover {
     cursor: pointer;
     background-color: var(--el-color-primary-light-9);
+    transform: scale(1.01);
+    transform-origin: top center;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 }
 
@@ -2439,15 +2435,31 @@ defineExpose({});
 
 // 指标复选框禁用状态样式（灰色半透明，明显区分）
 :deep(.el-checkbox-button.is-disabled) {
+  color: var(--el-text-color-disabled) !important;
   background-color: var(--el-fill-color-extra-light) !important;
   border-color: var(--el-border-color-lighter) !important;
-  color: var(--el-text-color-disabled) !important;
   opacity: 0.6;
 
   &:hover {
+    color: var(--el-text-color-disabled) !important;
     background-color: var(--el-fill-color-extra-light) !important;
     border-color: var(--el-border-color-lighter) !important;
-    color: var(--el-text-color-disabled) !important;
   }
+}
+
+// 视图切换过渡动画
+.view-transition-enter-active {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.view-transition-leave-active {
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.view-transition-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+.view-transition-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

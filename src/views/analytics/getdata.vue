@@ -358,67 +358,67 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .data-sync-container {
-  padding: 24px;
   min-height: 100vh;
+  padding: 24px;
 
   .page-header {
+    margin-bottom: 24px;
     font-size: 24px;
     font-weight: 600;
     color: var(--el-text-color-primary, #303133);
-    margin-bottom: 24px;
   }
 
   .section {
-    background: var(--el-bg-color-overlay, #ffffff);
-    border-radius: 8px;
     padding: 24px;
     margin-bottom: 24px;
+    background: var(--el-bg-color-overlay, #ffffff);
+    border-radius: 8px;
     box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.05);
 
     .section-title {
+      padding-bottom: 12px;
+      margin-bottom: 20px;
       font-size: 18px;
       font-weight: 600;
       color: var(--el-text-color-primary, #303133);
-      margin-bottom: 20px;
-      padding-bottom: 12px;
       border-bottom: 1px solid var(--el-border-color-light, #ebeef5);
     }
 
     .form-row {
       display: flex;
       gap: 12px;
-      margin-bottom: 20px;
       align-items: center;
+      margin-bottom: 20px;
     }
   }
 
   // 测试连接单卡片
   .test-result-card {
+    padding: 16px;
     margin-top: 20px;
     border: 1px solid var(--el-border-color-light, #ebeef5);
     border-radius: 8px;
-    padding: 16px;
     transition: all 0.3s;
 
     &.success {
-      border-left: 4px solid var(--el-color-success, #67c23a);
       background: var(--el-color-success-light-9, #f0f9eb);
+      border-left: 4px solid var(--el-color-success, #67c23a);
     }
 
     &.failure {
-      border-left: 4px solid var(--el-color-danger, #f56c6c);
       background: var(--el-color-danger-light-9, #fef0f0);
+      border-left: 4px solid var(--el-color-danger, #f56c6c);
     }
 
     .card-header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
       margin-bottom: 12px;
 
       .platform-name {
-        font-weight: 600;
         font-size: 16px;
+        font-weight: 600;
         color: var(--el-text-color-primary, #303133);
       }
     }
@@ -435,20 +435,20 @@ onMounted(() => {
         }
 
         .value {
-          color: var(--el-text-color-primary, #303133);
           font-weight: 500;
+          color: var(--el-text-color-primary, #303133);
         }
       }
 
       .message {
-        margin-top: 12px;
         padding: 10px;
+        margin-top: 12px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--el-text-color-regular, #606266);
+        word-break: break-all;
         background: rgba(255, 255, 255, 0.7);
         border-radius: 4px;
-        font-size: 13px;
-        color: var(--el-text-color-regular, #606266);
-        line-height: 1.5;
-        word-break: break-all;
       }
     }
   }
@@ -458,20 +458,20 @@ onMounted(() => {
     margin-top: 16px;
 
     .sync-platforms {
-      margin-top: 12px;
       padding: 12px;
+      margin-top: 12px;
+      font-size: 14px;
+      color: var(--el-color-primary, #409eff);
       background: var(--el-color-primary-light-9, #ecf5ff);
       border-radius: 4px;
-      color: var(--el-color-primary, #409eff);
-      font-size: 14px;
     }
   }
 
   // 分页栏
   .pagination-container {
-    margin-top: 20px;
     display: flex;
     justify-content: flex-end;
+    margin-top: 20px;
   }
 }
 </style>

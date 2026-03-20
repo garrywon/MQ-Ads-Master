@@ -355,9 +355,9 @@ const formComponents = {
   justify-content: center;
   width: 65px;
   height: 65px;
+  margin-right: 15px;
   background: radial-gradient(circle at 30% 20%, #ffffff, #e6efff);
   border-radius: 18px;
-  margin-right: 15px;
   // 卡片式双重阴影：右下深色 + 左上浅色（柔和版本）
   box-shadow:
     4px 4px 8px rgba(0, 0, 0, 0.08),

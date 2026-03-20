@@ -509,12 +509,12 @@ const formatDateRange = (dateRange) => {
       display: flex;
       flex-direction: row;
       gap: 0;
-      padding: 0;
       height: 24px;
+      padding: 0;
       margin-top: 8px;
+      overflow: hidden;
       background: var(--el-fill-color-light);
       border-radius: 6px;
-      overflow: hidden;
 
       .progress-segment {
         position: relative;
@@ -551,6 +551,7 @@ const formatDateRange = (dateRange) => {
         .progress-label {
           z-index: 1;
           max-width: 100%;
+          padding: 0 4px;
           overflow: hidden;
           text-overflow: ellipsis;
           font-size: 11px;
@@ -558,7 +559,6 @@ const formatDateRange = (dateRange) => {
           color: white;
           white-space: nowrap;
           text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-          padding: 0 4px;
         }
       }
     }

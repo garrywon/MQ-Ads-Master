@@ -1553,14 +1553,14 @@ onUnmounted(() => {});
       .el-table__row {
         td.el-table__cell {
           padding: 12px 0;
+          overflow: visible !important;
           font-size: 14px;
           border-bottom: 1px solid var(--el-border-color-extra-light);
-          overflow: visible !important;
 
           .cell {
+            overflow: visible !important;
             font-variant-numeric: tabular-nums;
             line-height: 1.4;
-            overflow: visible !important;
           }
         }
       }
