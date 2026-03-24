@@ -104,6 +104,25 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="分组">
+          <el-select
+            v-model="searchForm.groupBy"
+            placeholder="请选择分组"
+            clearable
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            style="width: 180px"
+            @change="handleQueryClick"
+          >
+            <el-option
+              v-for="item in groupByOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button @click="handleReset">重置</el-button>
           <el-button style="margin-left: 12px" @click="showColumnSetting = true">
@@ -125,6 +144,7 @@
         :highlight-current-row="false"
         height="calc(100vh - 200px)"
         show-summary
+        :summary-method="summaryMethod"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="index" label="序号" width="60" align="center" fixed="left" />
@@ -220,6 +240,7 @@ const searchForm = ref({
   channelIds: [],
   uaPlatformIds: [],
   monPlatformIds: [],
+  groupBy: ["report_date", "channel_id", "game_id"],
 });
 
 // 投放平台选项
@@ -233,6 +254,13 @@ const channelOptions = ref([]);
 
 // 游戏选项
 const gameOptions = ref([]);
+
+// 分组选项
+const groupByOptions = ref([
+  { value: "report_date", label: "日期" },
+  { value: "channel_id", label: "渠道" },
+  { value: "game_id", label: "游戏" },
+]);
 
 // 表格数据
 const tableData = ref([]);
@@ -407,6 +435,55 @@ const formatSummaryValue = (prop) => {
   return formatNumber(sum);
 };
 
+// 合计行方法
+const summaryMethod = (param) => {
+  const { columns, data } = param;
+  const sums = [];
+
+  columns.forEach((column, index) => {
+    if (index === 0) {
+      sums[index] = "合计";
+      return;
+    }
+
+    const prop = column.property;
+    if (!prop) {
+      sums[index] = "";
+      return;
+    }
+
+    const values = data.map((item) => Number(item[prop]));
+    const sum = values.reduce((prev, curr) => {
+      const val = Number(curr);
+      return prev + (isNaN(val) ? 0 : val);
+    }, 0);
+
+    if (prop === "spend") {
+      sums[index] = formatNumber(sum);
+    } else if (prop === "monEstimatedRevenue") {
+      sums[index] = formatNumber(sum);
+    } else if (prop === "ecpm") {
+      sums[index] = formatNumber(sum);
+    } else if (
+      prop === "installs" ||
+      prop === "uaImpressions" ||
+      prop === "uaClicks" ||
+      prop === "monImpressions" ||
+      prop === "monRequests" ||
+      prop === "monFills" ||
+      prop === "monClicks"
+    ) {
+      sums[index] = formatNumber(sum, true);
+    } else if (prop === "roi" || prop === "roas") {
+      sums[index] = "";
+    } else {
+      sums[index] = formatNumber(sum);
+    }
+  });
+
+  return sums;
+};
+
 // ====== 总计行相关函数 ======
 
 // 加载数据
@@ -430,6 +507,7 @@ const loadData = async () => {
       channel_ids: searchForm.value.channelIds || [],
       ua_platform_ids: searchForm.value.uaPlatformIds || [],
       mon_platform_ids: searchForm.value.monPlatformIds || [],
+      group_by: searchForm.value.groupBy || [],
       page: pagination.currentPage,
       size: pagination.pageSize,
     };
@@ -490,6 +568,7 @@ const handleReset = async () => {
     channelIds: [],
     uaPlatformIds: [],
     monPlatformIds: [],
+    groupBy: ["report_date", "channel_id", "game_id"],
   };
   await loadData();
 };
@@ -516,7 +595,15 @@ const handleResetMetrics = () => {
 
 // 计算可见列
 const visibleCols = computed(() => {
-  return cols.value.filter((col) => col.visible);
+  const groupBy = searchForm.value.groupBy || [];
+  return cols.value.filter((col) => {
+    if (!col.visible) return false;
+    if (col.prop === "date" && !groupBy.includes("report_date")) return false;
+    if (col.prop === "channelName" && !groupBy.includes("channel_id")) return false;
+    if ((col.prop === "gameId" || col.prop === "gameName") && !groupBy.includes("game_id"))
+      return false;
+    return true;
+  });
 });
 
 // 选择项变化
@@ -658,11 +745,22 @@ const dateShortcuts = [
 // 页面挂载时初始化
 onMounted(async () => {
   console.log("Component mounted");
+
+  // 读取 URL 参数并设置筛选条件
+  if (route.query.start && route.query.end) {
+    searchForm.value.date = [route.query.start, route.query.end];
+  }
+  if (route.query.channelIds) {
+    searchForm.value.channelIds = [Number(route.query.channelIds)];
+  }
+
   initDefaultDate();
   await loadUAPlatformOptions();
   await loadMONPlatformOptions();
   await loadChannelOptions();
   await loadGameOptions();
+
+  // 加载数据
   await loadData();
 });
 

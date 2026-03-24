@@ -115,6 +115,17 @@ const NoticeAPI = {
   },
 
   /**
+   * 获取通知用户列表
+   * @returns {Promise} 用户列表
+   */
+  getUsers() {
+    return request({
+      url: `${NOTICE_BASE_URL}/users`,
+      method: "get",
+    });
+  },
+
+  /**
    * 获取我的通知分页列表
    * @param {Object} queryParams 查询参数
    * @returns {Promise} 通知分页列表

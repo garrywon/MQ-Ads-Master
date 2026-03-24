@@ -87,6 +87,25 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="渠道">
+          <el-select
+            v-model="searchForm.channelIds"
+            placeholder="请选择渠道"
+            clearable
+            multiple
+            collapse-tags
+            collapse-tags-tooltip
+            style="width: 180px"
+            @change="handleQueryClick"
+          >
+            <el-option
+              v-for="item in channelOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="分组">
           <el-select
             v-model="searchForm.groupBy"
@@ -187,6 +206,11 @@
               </template>
               <template v-else-if="col.slotName === 'platform'">
                 <el-tag :type="getPlatformTag(scope.row[col.prop])">
+                  {{ scope.row[col.prop] }}
+                </el-tag>
+              </template>
+              <template v-else-if="col.slotName === 'channel'">
+                <el-tag :type="getChannelTag(scope.row[col.prop])">
                   {{ scope.row[col.prop] }}
                 </el-tag>
               </template>
@@ -375,6 +399,7 @@ const stepLoading = ref(false);
 const searchForm = ref({
   date: [],
   platforms: [],
+  channelIds: [],
   gameIds: [],
   groupBy: ["report_date", "game_id", "channel_id"],
   metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr", "fill_rate"],
@@ -398,6 +423,8 @@ const chartMetric = ref("revenue");
 const groupByOptions = [
   { value: "report_date", label: "日期" },
   { value: "platform_id", label: "广告平台" },
+  { value: "channel_id", label: "渠道" },
+  { value: "ad_unit_name", label: "广告单元" },
   { value: "game_id", label: "游戏" },
 ];
 
@@ -416,7 +443,15 @@ const metricsOptions = [
 const showColumnSetting = ref(false);
 const cols = ref([
   { label: "日期", align: "center", prop: "date", width: 120, sortable: true },
-  { label: "图标", align: "center", prop: "icon", width: 80, templet: "image" }, // 图标列不启用排序
+  { label: "图标", align: "center", prop: "icon", width: 80, templet: "image" },
+  {
+    label: "渠道",
+    align: "center",
+    prop: "channel",
+    width: 120,
+    slotName: "channel",
+    sortable: true,
+  },
   {
     label: "包名",
     align: "center",
@@ -437,6 +472,13 @@ const cols = ref([
     prop: "platform",
     width: 120,
     slotName: "platform",
+    sortable: true,
+  },
+  {
+    label: "广告单元",
+    align: "center",
+    prop: "ad_unit_name",
+    minWidth: 150,
     sortable: true,
   },
   {
@@ -477,6 +519,12 @@ const finalColumns = computed(() => {
         activeProps.add("packageName");
         activeProps.add("gameName");
         activeProps.add("icon");
+        break;
+      case "channel_id":
+        activeProps.add("channel");
+        break;
+      case "ad_unit_name":
+        activeProps.add("ad_unit_name");
         break;
     }
   });
@@ -708,11 +756,11 @@ const indexAction = async (params) => {
           id: index + 1,
           // 映射API字段到表格字段
           date: item.report_date || "",
-          channel: item.channel_id || "",
+          channel: item.channel_name || "",
           packageName: item.package_name || "",
           gameName: item.game_name || "",
           // 新增字段
-          platform: item.platform_id || item.platform || "",
+          platform: item.platform_name || "",
           platformName: item.platform_name || item.platformName || item.platform || item.name || "",
           campaign_name: item.campaign_name || item.campaignName || item.campaign || "",
           revenue: item.estimated_revenue || 0,
@@ -778,6 +826,7 @@ const handleQueryClick = async () => {
   const searchData = {
     date: searchForm.value.date,
     platforms: searchForm.value.platforms,
+    channelIds: searchForm.value.channelIds,
     gameIds: searchForm.value.gameIds,
     groupBy: searchForm.value.groupBy,
     // 过滤掉 cvr 和 fill_rate，只发送API支持的指标
@@ -1352,10 +1401,10 @@ const loadChartData = async (dateRange) => {
     tableData.value = rawData.map((item, index) => ({
       id: index + 1,
       date: item.report_date || "",
-      channel: item.channel_id || "",
+      channel: item.channel_name || "",
       packageName: item.package_name || "",
       gameName: item.game_name || "",
-      platform: item.platform_id || item.platform || "",
+      platform: item.platform_name || "",
       platformName: item.platform_name || item.platformName || item.name || "",
       revenue: item.revenue || 0,
       impressions: item.impressions || 0,
@@ -1416,11 +1465,13 @@ const canGoNext = computed(() => {
 const handleReset = async () => {
   // 重新加载平台选项并设置默认值
   await loadPlatformOptions();
+  await loadChannelOptions(); // 重新加载渠道选项
   await loadGameOptions(); // 重新加载游戏选项
 
   searchForm.value = {
     date: [],
     platforms: searchForm.value.platforms, // 保持默认筛选（type=MON）
+    channelIds: [], // 重置为空（无默认筛选）
     gameIds: [], // 重置为空（无默认筛选）
     groupBy: ["report_date", "game_id", "channel_id"],
     metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr", "fill_rate"],
@@ -1611,6 +1662,7 @@ onMounted(async () => {
   console.log("Component mounted");
   initDefaultDate(); // 设置默认日期范围（最近7天）
   await loadPlatformOptions(); // 加载平台选项
+  await loadChannelOptions(); // 加载渠道选项
   await loadGameOptions(); // 加载游戏选项
   await loadData(); // 再加载数据
 });

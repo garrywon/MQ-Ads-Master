@@ -263,6 +263,10 @@ const dialogState = reactive({
 
 // 初始表单数据
 const initialFormData = {
+  id: undefined,
+  username: "",
+  nickname: "",
+  roleIds: [],
   status: CommonStatus.ENABLED,
   password: "",
 };

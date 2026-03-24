@@ -464,6 +464,7 @@ const metricsOptions = [
   { value: "installs", label: "激活数" },
   { value: "ctr", label: "CTR" },
   { value: "cvr", label: "CVR" },
+  { value: "cpm", label: "CPM" },
 ];
 
 // 列拖拽相关
@@ -521,6 +522,7 @@ const cols = ref([
   { label: "激活数", align: "center", prop: "installs", minWidth: 128, sortable: true },
   { label: "CTR", align: "center", prop: "ctr", minWidth: 128, sortable: true },
   { label: "CVR", align: "center", prop: "cvr", minWidth: 128, sortable: true },
+  { label: "CPM", align: "center", prop: "cpm", minWidth: 128, sortable: true },
 ]);
 
 // 动态计算要显示的列（基于分组选择和指标选择，保持 cols 拖拽后的顺序）
@@ -556,7 +558,7 @@ const finalColumns = computed(() => {
   });
 
   // 添加指标列（根据选择的指标）
-  const metricProps = ["spend", "impressions", "clicks", "installs", "cvr", "ctr"];
+  const metricProps = ["spend", "impressions", "clicks", "installs", "cvr", "ctr", "cpm"];
   metrics.forEach((prop) => {
     if (metricProps.includes(prop)) {
       activeProps.add(prop);
@@ -624,6 +626,14 @@ const calculateCVR = (item) => {
   return "0.00%";
 };
 
+// 动态计算CPM值的函数
+const calculateCPM = (item) => {
+  if (item.spend && item.impressions !== undefined && item.impressions > 0) {
+    return ((item.spend / item.impressions) * 1000).toFixed(2);
+  }
+  return "0.00";
+};
+
 // 将API返回的CTR转换为百分数格式
 const formatCTR = (item) => {
   // 如果API已经返回了CTR值，直接使用并格式化为百分数
@@ -659,7 +669,7 @@ const formatNumber = (num) => {
 // ====== 总计行相关函数 ======
 
 // 数值列列表（需要统计的列）
-const numericColumns = ["spend", "impressions", "clicks", "installs", "ctr", "cvr"];
+const numericColumns = ["spend", "impressions", "clicks", "installs", "ctr", "cvr", "cpm"];
 
 // 判断是否为数值列
 const isNumericColumn = (prop) => {
@@ -690,6 +700,15 @@ const formatSummaryValue = (prop) => {
     case "clicks":
     case "installs":
       return formatNumber(sum);
+    case "cpm":
+      if (sum > 0) {
+        const totalSpend = calculateColumnSum("spend");
+        const totalImpressions = calculateColumnSum("impressions");
+        if (totalImpressions > 0) {
+          return ((totalSpend / totalImpressions) * 1000).toFixed(2);
+        }
+      }
+      return "0.00";
     default:
       return "-"; // 包括 ctr、cvr 在内的非数值列都返回 "-"
   }
@@ -763,6 +782,8 @@ const indexAction = async (params) => {
         const calculatedCVR = calculateCVR(item);
         // 格式化API返回的CTR值为百分数
         const formattedCTR = formatCTR(item);
+        // 计算CPM值
+        const calculatedCPM = calculateCPM(item);
 
         return {
           // 使用自增的数字ID，而不是API返回的ID
@@ -773,7 +794,7 @@ const indexAction = async (params) => {
           packageName: item.package_name || "",
           gameName: item.game_name || "",
           // 新增字段
-          platform: item.platform_id || item.platform || "",
+          platform: item.platform_name || "",
           platformName: item.platform_name || item.platformName || item.platform || item.name || "",
           campaign_name: item.campaign_name || item.campaignName || item.campaign || "",
           spend: item.spend || 0,
@@ -784,6 +805,8 @@ const indexAction = async (params) => {
           cvr: calculatedCVR,
           // 使用格式化后的CTR值
           ctr: formattedCTR,
+          // 使用计算后的CPM值
+          cpm: calculatedCPM,
           // 保留原始数据以备后续使用，但不覆盖计算的字段
           ...Object.fromEntries(
             Object.entries(item).filter(
@@ -1415,7 +1438,7 @@ const loadChartData = async (dateRange) => {
       channel: item.channel_name || "",
       packageName: item.package_name || "",
       gameName: item.game_name || "",
-      platform: item.platform_id || item.platform || "",
+      platform: item.platform_name || "",
       platformName: item.platform_name || item.platformName || item.name || "",
       spend: item.spend || 0,
       impressions: item.impressions || 0,
@@ -1423,6 +1446,7 @@ const loadChartData = async (dateRange) => {
       installs: item.installs || 0,
       cvr: calculateCVR(item),
       ctr: formatCTR(item),
+      cpm: calculateCPM(item),
       dateRange: [dateStart, dateEnd],
       ...Object.fromEntries(Object.entries(item).filter(([key]) => !["ctr", "cvr"].includes(key))),
     }));

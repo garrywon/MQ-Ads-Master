@@ -65,8 +65,8 @@ setTimeout(() => {
   tagsViewStore.initDashboardTag();
 }, 0);
 
-// 5️⃣ WebSocket 初始化
-setupWebSocket();
+// 5️⃣ WebSocket 初始化（暂时禁用，后端不支持 /topic/dict 和 /topic/online-count）
+// setupWebSocket();
 
 // 6️⃣ 挂载应用
 app.mount("#app");

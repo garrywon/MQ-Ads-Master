@@ -82,7 +82,15 @@
         <el-table-column align="center" label="通告目标类型" prop="targetType" min-width="120">
           <template #default="scope">
             <el-tag v-if="scope.row.targetType == 1" type="warning">全体</el-tag>
-            <el-tag v-if="scope.row.targetType == 2" type="success">指定</el-tag>
+            <el-tooltip v-else-if="scope.row.targetType == 2" placement="top">
+              <template #content>
+                <span v-for="(id, index) in scope.row.targetUserIds" :key="id">
+                  {{ userNameMap[id] || id
+                  }}{{ index < scope.row.targetUserIds.length - 1 ? "、" : "" }}
+                </span>
+              </template>
+              <el-tag type="success">指定</el-tag>
+            </el-tooltip>
           </template>
         </el-table-column>
         <el-table-column align="center" label="发布状态" min-width="100">
@@ -293,7 +301,6 @@ defineOptions({
 });
 
 import NoticeAPI from "@/api/system/notice";
-import UserAPI from "@/api/system/user";
 import { FullScreen, CopyDocument, Close } from "@element-plus/icons-vue";
 
 const queryFormRef = ref();
@@ -309,6 +316,7 @@ const queryParams = reactive({
 });
 
 const userOptions = ref([]);
+const userNameMap = ref({});
 // 通知公告表格数据
 const pageData = ref([]);
 
@@ -455,8 +463,15 @@ function handleSelectionChange(selection) {
  */
 function handleOpenDialog(id) {
   dialog.fullscreen = false;
-  UserAPI.getOptions().then((data) => {
-    userOptions.value = data;
+  NoticeAPI.getUsers().then((data) => {
+    const options = data.map((item) => ({
+      value: item.id,
+      label: `${item.nickname} (${item.username})`,
+    }));
+    userOptions.value = options;
+    options.forEach((item) => {
+      userNameMap.value[item.value] = item.label;
+    });
   });
 
   dialog.visible = true;
@@ -675,6 +690,11 @@ function handleDelete(id) {
 }
 
 onMounted(() => {
+  NoticeAPI.getUsers().then((data) => {
+    data.forEach((item) => {
+      userNameMap.value[item.id] = `${item.nickname} (${item.username})`;
+    });
+  });
   handleQuery();
 });
 </script>
