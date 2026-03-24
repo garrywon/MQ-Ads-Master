@@ -23,9 +23,9 @@
       </div> -->
 
       <!-- 通知 -->
-      <!-- <div class="navbar-actions__item">
+      <div class="navbar-actions__item">
         <NoticeDropdown />
-      </div> -->
+      </div>
 
       <!-- 租户选择（如启用多租户且租户数大于 1） -->
       <div v-if="showTenantSelect" class="navbar-actions__item">

@@ -85,8 +85,16 @@ export function useStomp(options = {}) {
       return;
     }
 
+    // 替换 URL 中的 token 占位符
+    let brokerURL = config.brokerURL.value;
+    if (brokerURL.includes("<jwt_access_token>")) {
+      brokerURL = brokerURL.replace("<jwt_access_token>", token);
+      console.log("✅ WebSocket URL 中的 token 占位符已替换");
+      console.log("🔌 正在连接 WebSocket:", brokerURL.split("?")[0]); // 不显示完整 token
+    }
+
     client.value = new Client({
-      brokerURL: config.brokerURL.value,
+      brokerURL,
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },
@@ -101,7 +109,9 @@ export function useStomp(options = {}) {
       reconnectAttempts.value = 0;
       clearAllTimers();
       log("✅ WebSocket 已连接");
+      console.log("🔄 准备恢复订阅，当前 Registry 大小:", subscriptionRegistry.size);
       restoreSubscriptions();
+      console.log("📋 订阅恢复完成");
     };
 
     client.value.onDisconnect = () => {
@@ -196,27 +206,32 @@ export function useStomp(options = {}) {
 
   const performSubscribe = (destination, callback) => {
     if (!client.value || !client.value.connected) {
+      console.warn("[useStomp] WebSocket 未连接，无法订阅:", destination);
       return "";
     }
 
     try {
+      console.log("🔔 尝试订阅:", destination);
       const subscription = client.value.subscribe(destination, callback);
       activeSubscriptions.set(subscription.id, subscription);
       destinationToSubscriptionId.set(destination, subscription.id);
+      console.log("✅ 订阅成功:", destination, "subscriptionId:", subscription.id);
       return subscription.id;
     } catch (e) {
-      console.error("[useStomp] subscribe failed", destination, e);
+      console.error("❌ 订阅失败:", destination, e);
       return "";
     }
   };
 
   const subscribe = (destination, callback) => {
+    console.log("📝 注册订阅到 Registry:", destination);
     subscriptionRegistry.set(destination, callback);
 
     if (client.value?.connected) {
       return performSubscribe(destination, callback);
     }
 
+    console.log("⏳ WebSocket 未连接，将在连接成功后自动订阅:", destination);
     return "";
   };
 

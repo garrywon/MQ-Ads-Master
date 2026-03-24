@@ -9,43 +9,42 @@
     </div>
 
     <template #dropdown>
-      <div class="p-5">
-        <template v-if="list.length > 0">
-          <div v-for="item in list" :key="item.id" class="w-500px py-3">
-            <div class="flex-y-center">
-              <DictTag v-model="item.type" code="notice_type" size="small" />
-              <el-text
-                size="small"
-                class="w-200px cursor-pointer !ml-2 !flex-1"
-                truncated
-                @click="read(item.id)"
-              >
+      <div class="notice-dropdown">
+        <!-- 滚动列表区域 -->
+        <div class="notice-list">
+          <template v-if="list.length > 0">
+            <div v-for="item in list" :key="item.id" class="notice-item" @click="read(item.id)">
+              <div class="notice-item__header">
+                <el-tag :type="getNoticeTypeTagType(item.type)" size="small">
+                  {{ getNoticeTypeLabel(item.type) }}
+                </el-tag>
+                <span class="notice-item__time">
+                  {{ item.publishTime }}
+                </span>
+              </div>
+              <div class="notice-item__title">
                 {{ item.title }}
-              </el-text>
-
-              <div class="text-xs text-gray">
-                {{ item.publishTime }}
               </div>
             </div>
-          </div>
-          <el-divider />
-          <div class="flex-x-between">
-            <el-link type="primary" underline="never" @click="goMore">
-              <span class="text-xs">查看更多</span>
-              <el-icon class="text-xs">
-                <ArrowRight />
-              </el-icon>
-            </el-link>
-            <el-link v-if="list.length > 0" type="primary" underline="never" @click="readAll">
-              <span class="text-xs">全部已读</span>
-            </el-link>
-          </div>
-        </template>
-        <template v-else>
-          <div class="flex-center h-150px w-350px">
-            <el-empty :image-size="50" description="暂无消息" />
-          </div>
-        </template>
+          </template>
+          <template v-else>
+            <div class="notice-empty">
+              <el-empty :image-size="50" description="暂无消息" />
+            </div>
+          </template>
+        </div>
+
+        <!-- 固定底部操作栏 -->
+        <div class="notice-footer">
+          <el-link type="primary" :underline="false" @click="handleViewMore">
+            <el-icon><View /></el-icon>
+            查看更多
+          </el-link>
+          <el-link v-if="list.length > 0" type="primary" :underline="false" @click="readAll">
+            <el-icon><Check /></el-icon>
+            全部已读
+          </el-link>
+        </div>
       </div>
     </template>
   </el-dropdown>
@@ -76,12 +75,121 @@
 </template>
 
 <script setup>
+import { View, Check } from "@element-plus/icons-vue";
 import { useNotice } from "./useNotice";
 
-const { list, unreadTotal, detail, dialogVisible, read, readAll, goMore } = useNotice();
+const { list, unreadTotal, detail, dialogVisible, read, readAll, handleViewMore } = useNotice();
+
+function getNoticeTypeLabel(type) {
+  const labels = {
+    1: "版本更新",
+    2: "系统维护",
+    3: "安全提醒",
+    4: "放假通知",
+    5: "活动通知",
+  };
+  return labels[type] || String(type);
+}
+
+function getNoticeTypeTagType(type) {
+  const types = {
+    1: "",
+    2: "warning",
+    3: "danger",
+    4: "success",
+    5: "info",
+  };
+  return types[type] || "";
+}
 </script>
 
 <style lang="scss" scoped>
+// 下拉容器
+.notice-dropdown {
+  display: flex;
+  flex-direction: column;
+  width: 330px;
+}
+
+// 滚动列表区域
+.notice-list {
+  max-height: 350px;
+  overflow-y: auto;
+
+  // 美化滚动条
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+  }
+}
+
+// 通知项
+.notice-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: var(--el-fill-color-light);
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+  }
+
+  &__time {
+    font-size: 12px;
+    color: var(--el-text-color-secondary);
+  }
+
+  &__title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 14px;
+    color: var(--el-text-color-primary);
+    white-space: nowrap;
+  }
+}
+
+// 空状态
+.notice-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+// 底部操作栏
+.notice-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: var(--el-fill-color-lighter);
+  border-top: 1px solid var(--el-border-color-lighter);
+
+  .el-link {
+    font-size: 13px;
+  }
+}
+
+// 原有样式保持兼容
 .notice {
   &__dropdown {
     display: flex;

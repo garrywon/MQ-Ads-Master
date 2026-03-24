@@ -66,16 +66,20 @@
         <el-table-column label="通知标题" prop="title" min-width="200" />
         <el-table-column align="center" label="通知类型" width="150">
           <template #default="scope">
-            <DictTag v-model="scope.row.type" :code="'notice_type'" />
+            <el-tag :type="getNoticeTypeTagType(scope.row.type)">
+              {{ getNoticeTypeLabel(scope.row.type) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column align="center" label="发布人" prop="publisherName" width="150" />
         <el-table-column align="center" label="通知等级" width="100">
           <template #default="scope">
-            <DictTag v-model="scope.row.level" code="notice_level" />
+            <el-tag :type="getNoticeLevelTagType(scope.row.level)">
+              {{ getNoticeLevelLabel(scope.row.level) }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="通告目标类型" prop="targetType" min-width="100">
+        <el-table-column align="center" label="通告目标类型" prop="targetType" min-width="120">
           <template #default="scope">
             <el-tag v-if="scope.row.targetType == 1" type="warning">全体</el-tag>
             <el-tag v-if="scope.row.targetType == 2" type="success">指定</el-tag>
@@ -197,10 +201,20 @@
         </el-form-item>
 
         <el-form-item label="通知类型" prop="type">
-          <DictSelect v-model="formData.type" code="notice_type" />
+          <el-select v-model="formData.type" placeholder="请选择通知类型">
+            <el-option label="版本更新" :value="1" />
+            <el-option label="系统维护" :value="2" />
+            <el-option label="安全提醒" :value="3" />
+            <el-option label="放假通知" :value="4" />
+            <el-option label="活动通知" :value="5" />
+          </el-select>
         </el-form-item>
         <el-form-item label="通知等级" prop="level">
-          <DictSelect v-model="formData.level" code="notice_level" />
+          <el-radio-group v-model="formData.level">
+            <el-radio value="L">低优先级</el-radio>
+            <el-radio value="M">中优先级</el-radio>
+            <el-radio value="H">高优先级</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="目标类型" prop="targetType">
           <el-radio-group v-model="formData.targetType">
@@ -314,6 +328,8 @@ const formData = reactive({
 // 通知公告表单校验规则
 const rules = reactive({
   title: [{ required: true, message: "请输入通知标题", trigger: "blur" }],
+  type: [{ required: true, message: "请选择通知类型", trigger: "change" }],
+  targetType: [{ required: true, message: "请选择目标类型", trigger: "change" }],
   content: [
     {
       required: true,
@@ -328,7 +344,18 @@ const rules = reactive({
       },
     },
   ],
-  type: [{ required: true, message: "请选择通知类型", trigger: "change" }],
+  targetUsers: [
+    {
+      validator: (rule, value, callback) => {
+        if (formData.targetType === 2 && (!value || value.length === 0)) {
+          callback(new Error("请选择指定用户"));
+        } else {
+          callback();
+        }
+      },
+      trigger: "change",
+    },
+  ],
 });
 
 const detailDialog = reactive({
@@ -346,9 +373,65 @@ function handleQuery() {
 function fetchData() {
   loading.value = true;
   NoticeAPI.getPage(queryParams)
-    .then((data) => {
-      pageData.value = data.list;
-      total.value = data.total ?? 0;
+    .then((response) => {
+      // request.js 响应拦截器已经提取了 data 字段
+      // 所以 response 就是后端返回的 data 内容
+
+      // 详细调试日志
+      console.log("🔍 响应数据类型:", typeof response, Array.isArray(response) ? "数组" : "对象");
+      console.log("🔍 响应内容:", JSON.stringify(response, null, 2));
+      if (response && typeof response === "object") {
+        console.log("🔍 响应字段:", Object.keys(response));
+      }
+
+      // 防御性检查：确保response存在
+      if (!response) {
+        console.warn("⚠️ API响应为空");
+        pageData.value = [];
+        total.value = 0;
+        return;
+      }
+
+      let list = [];
+
+      // 兼容多种响应结构
+      // request 拦截器已经提取了 data，所以 response 是 data 内容
+      if (Array.isArray(response)) {
+        // 情况1: response 是数组 [...] - 正常使用
+        list = response;
+        console.log("✅ 响应是数组，包含", list.length, "条数据");
+      } else if (response && typeof response === "object") {
+        if (response.id) {
+          // 情况2: response 是单个对象 { id, title, ... } - 包装成数组
+          list = [response];
+          console.log("✅ 响应是单个对象，包装成数组");
+        } else if (Array.isArray(response.list)) {
+          // 情况3: response 是 { list: [...] } - 提取 list
+          list = response.list;
+          console.log("✅ 响应包含 list 字段");
+        } else {
+          console.warn("⚠️ 响应是未知对象结构:", Object.keys(response));
+          list = [];
+        }
+      }
+
+      // 尝试从响应中获取分页信息
+      let totalCount = 0;
+      if (response && typeof response === "object") {
+        totalCount = response.total ?? response.page?.total ?? list.length;
+      }
+
+      console.log("📊 共", list.length, "条数据, 总数:", totalCount);
+
+      // 确保list是数组再调用map
+      pageData.value = Array.isArray(list) ? list.map(transformNoticeItem) : [];
+      total.value = totalCount;
+    })
+    .catch((error) => {
+      console.error("❌ 获取通知列表失败:", error);
+      ElMessage.error("获取数据失败");
+      pageData.value = [];
+      total.value = 0;
     })
     .finally(() => {
       loading.value = false;
@@ -380,15 +463,30 @@ function handleOpenDialog(id) {
   if (id) {
     dialog.title = "修改公告";
     NoticeAPI.getFormData(id).then((data) => {
+      const transformed = transformNoticeItem(data);
       Object.assign(formData, {
-        ...data,
-        targetUsers: normalizeTargetUsers(data?.targetUserIds ?? data?.targetUsers),
+        ...transformed,
+        targetUsers: normalizeTargetUsers(transformed.targetUserIds),
+        id: transformed.id,
       });
     });
   } else {
     Object.assign(formData, { level: "L", targetType: 1, targetUsers: [] });
     dialog.title = "新增公告";
   }
+}
+
+// 打开通知详情弹窗
+function openDetailDialog(id) {
+  NoticeAPI.getDetail(id).then((data) => {
+    currentNotice.value = transformNoticeItem(data);
+    detailDialog.visible = true;
+  });
+}
+
+// 关闭通知详情弹窗
+function closeDetailDialog() {
+  detailDialog.visible = false;
 }
 
 // 发布通知公告
@@ -412,11 +510,15 @@ function handleSubmit() {
   dataFormRef.value.validate((valid) => {
     if (valid) {
       loading.value = true;
+      // 转换字段名为 snake_case 以符合后端接口规范
       const payload = {
-        ...formData,
-        targetUserIds: formData.targetType === 2 ? (formData.targetUsers ?? []) : [],
+        title: formData.title,
+        type: Number(formData.type), // 转为整数
+        level: formData.level,
+        target_type: formData.targetType,
+        target_user_ids: formData.targetType === 2 ? (formData.targetUsers ?? []) : [],
+        content: formData.content,
       };
-      delete payload.targetUsers;
       const id = formData.id;
       if (id) {
         NoticeAPI.update(id, payload)
@@ -464,6 +566,72 @@ function normalizeTargetUsers(value) {
     }
   }
   return [];
+}
+
+// 转换通知字段（snake_case -> camelCase）
+function transformNoticeItem(item) {
+  if (!item) return {};
+  return {
+    id: item.id,
+    title: item.title,
+    type: item.type,
+    level: item.level,
+    levelLabel: item.level_label,
+    targetType: item.target_type,
+    targetUserIds: item.target_user_ids,
+    content: item.content,
+    publishStatus: item.publish_status,
+    publisherName: item.publisher_name,
+    publisherId: item.publisher_id,
+    publishTime: item.publish_time,
+    createTime: item.create_time,
+    revokeTime: item.revoke_time,
+    isRead: item.is_read,
+  };
+}
+
+// 获取通知类型标签
+function getNoticeTypeLabel(type) {
+  const labels = {
+    1: "版本更新",
+    2: "系统维护",
+    3: "安全提醒",
+    4: "放假通知",
+    5: "活动通知",
+  };
+  return labels[type] || String(type);
+}
+
+// 获取通知类型的标签样式
+function getNoticeTypeTagType(type) {
+  const types = {
+    1: "",
+    2: "warning",
+    3: "danger",
+    4: "success",
+    5: "info",
+  };
+  return types[type] || "";
+}
+
+// 获取通知等级标签
+function getNoticeLevelLabel(level) {
+  const labels = {
+    L: "低优先级",
+    M: "中优先级",
+    H: "高优先级",
+  };
+  return labels[level] || level;
+}
+
+// 获取通知等级的标签样式
+function getNoticeLevelTagType(level) {
+  const types = {
+    L: "",
+    M: "warning",
+    H: "danger",
+  };
+  return types[level] || "";
 }
 
 // 关闭通知公告弹窗

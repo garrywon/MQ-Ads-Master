@@ -154,14 +154,30 @@
 
             <template #default="scope">
               <template v-if="col.prop === 'packageName'">
-                <span>{{ scope.row[col.prop] }}</span>
-                <CopyButton
-                  v-if="scope.row.packageName && scope.row.packageName !== ''"
-                  :text="scope.row[col.prop]"
-                  style="margin-left: 8px; vertical-align: middle"
+                <span
+                  class="copyable-text"
+                  :class="{ 'text-muted': !scope.row.packageName }"
+                  @click="copyText(scope.row.packageName)"
+                  :style="{
+                    cursor: scope.row.packageName ? 'pointer' : 'default',
+                    color: scope.row.packageName ? 'var(--el-color-primary)' : '',
+                  }"
                 >
-                  <el-icon><DocumentCopy /></el-icon>
-                </CopyButton>
+                  {{ scope.row.packageName || "-" }}
+                </span>
+              </template>
+              <template v-else-if="col.prop === 'gameName'">
+                <span
+                  class="copyable-text"
+                  :class="{ 'text-muted': !scope.row.gameName }"
+                  @click="copyText(scope.row.gameName)"
+                  :style="{
+                    cursor: scope.row.gameName ? 'pointer' : 'default',
+                    color: scope.row.gameName ? 'var(--el-color-primary)' : '',
+                  }"
+                >
+                  {{ scope.row.gameName || "-" }}
+                </span>
               </template>
               <template v-else-if="col.slotName === 'revenue'">
                 <el-text type="success">{{ formatNumber(scope.row[col.prop]) }}</el-text>
@@ -699,7 +715,7 @@ const indexAction = async (params) => {
           platform: item.platform_id || item.platform || "",
           platformName: item.platform_name || item.platformName || item.platform || item.name || "",
           campaign_name: item.campaign_name || item.campaignName || item.campaign || "",
-          revenue: item.revenue || 0,
+          revenue: item.estimated_revenue || 0,
           impressions: item.impressions || 0,
           clicks: item.clicks || 0,
           fills: item.fills || 0,
@@ -769,6 +785,47 @@ const handleQueryClick = async () => {
   };
   console.log("Search data:", searchData);
   await loadData(searchData);
+};
+
+// 复制文本函数
+const copyText = (text) => {
+  if (!text) {
+    ElMessage.warning("无内容可复制");
+    return;
+  }
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        ElMessage.success("复制成功");
+      })
+      .catch((error) => {
+        ElMessage.warning("复制失败");
+        console.error("[CopyText] Copy failed", error);
+      });
+  } else {
+    // 兼容性处理
+    const input = document.createElement("input");
+    input.style.position = "absolute";
+    input.style.left = "-9999px";
+    input.setAttribute("value", text);
+    document.body.appendChild(input);
+    input.select();
+    try {
+      const successful = document.execCommand("copy");
+      if (successful) {
+        ElMessage.success("复制成功");
+      } else {
+        ElMessage.warning("复制失败");
+      }
+    } catch (err) {
+      ElMessage.error("复制失败");
+      console.error("[CopyText] Copy failed.", err);
+    } finally {
+      document.body.removeChild(input);
+    }
+  }
 };
 
 // 分组选择变化时的处理（防止取消最后一个分组）

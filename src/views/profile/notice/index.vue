@@ -34,19 +34,22 @@
         ref="dataTableRef"
         v-loading="loading"
         :data="pageData"
-        highlight-current-row
         class="table-section__content"
       >
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column label="通知标题" prop="title" min-width="200" />
         <el-table-column align="center" label="通知类型" width="150">
           <template #default="scope">
-            <DictTag v-model="scope.row.type" code="notice_type" />
+            <el-tag :type="getNoticeTypeTagType(scope.row.type)">
+              {{ getNoticeTypeLabel(scope.row.type) }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column align="center" label="通知等级" width="100">
+        <el-table-column align="center" label="通知等级" width="120">
           <template #default="scope">
-            <DictTag v-model="scope.row.level" code="notice_level" />
+            <el-tag :type="getNoticeLevelTagType(scope.row.level)">
+              {{ getNoticeLevelLabel(scope.row.level) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column
@@ -117,6 +120,46 @@ import { onMounted, reactive, ref } from "vue";
 import { ElMessage } from "element-plus";
 import NoticeAPI from "@/api/system/notice";
 
+function getNoticeTypeLabel(type) {
+  const labels = {
+    1: "版本更新",
+    2: "系统维护",
+    3: "安全提醒",
+    4: "放假通知",
+    5: "活动通知",
+  };
+  return labels[type] || String(type);
+}
+
+function getNoticeTypeTagType(type) {
+  const types = {
+    1: "",
+    2: "warning",
+    3: "danger",
+    4: "success",
+    5: "info",
+  };
+  return types[type] || "";
+}
+
+function getNoticeLevelLabel(level) {
+  const labels = {
+    L: "低优先级",
+    M: "中优先级",
+    H: "高优先级",
+  };
+  return labels[level] || level;
+}
+
+function getNoticeLevelTagType(level) {
+  const types = {
+    L: "",
+    M: "warning",
+    H: "danger",
+  };
+  return types[level] || "";
+}
+
 const queryFormRef = ref();
 const pageData = ref([]);
 const loading = ref(false);
@@ -130,12 +173,38 @@ const queryParams = reactive({
 const noticeDialogVisible = ref(false);
 const noticeDetail = ref(null);
 
+function transformNoticeItem(item) {
+  if (!item) return {};
+  return {
+    id: item.id,
+    title: item.title,
+    type: item.type,
+    level: item.level,
+    levelLabel: item.level_label,
+    content: item.content,
+    publishStatus: item.publish_status,
+    publisherName: item.publisher_name,
+    publisherId: item.publisher_id,
+    publishTime: item.publish_time,
+    isRead: item.is_read,
+  };
+}
+
 async function handleQuery() {
   loading.value = true;
   try {
     const data = await NoticeAPI.getMyNoticePage(queryParams);
-    pageData.value = data.list;
-    total.value = data.total ?? 0;
+    let listData = data;
+    if (!Array.isArray(data)) {
+      listData = data?.list || [];
+    }
+    pageData.value = listData.map(transformNoticeItem);
+    total.value = data?.total ?? 0;
+  } catch (error) {
+    console.error("获取通知失败:", error);
+    ElMessage.error("获取通知列表失败");
+    pageData.value = [];
+    total.value = 0;
   } finally {
     loading.value = false;
   }
@@ -150,7 +219,7 @@ function handleResetQuery() {
 async function handleReadNotice(id) {
   try {
     const data = await NoticeAPI.getDetail(id);
-    noticeDetail.value = data;
+    noticeDetail.value = transformNoticeItem(data);
     noticeDialogVisible.value = true;
   } catch (error) {
     ElMessage.error("获取通知详情失败");
@@ -164,6 +233,21 @@ onMounted(() => {
 </script>
 
 <style lang="scss" scoped>
+:deep(.el-table__row) {
+  position: relative;
+  z-index: 1;
+  transition: all 0.2s linear;
+
+  &:hover {
+    z-index: 10;
+    cursor: pointer;
+    background-color: var(--el-color-primary-light-9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: scale(1.01);
+    transform-origin: top center;
+  }
+}
+
 :deep(.el-dialog__header) {
   text-align: center;
 }

@@ -130,6 +130,27 @@ const AnalysisAPI = {
       customHandleResponse: true,
     });
   },
+  /**
+   * 获取计划名称列表（用于筛选框）
+   * @param {Object} params - 查询参数
+   * @param {number|string} params.game_id - 游戏ID（可选）
+   * @param {number|string} params.platform_id - 平台ID（可选）
+   * @param {number|string} params.channel_id - 渠道ID（可选）
+   * @param {number} params.days - 活跃天数，默认30，最大90
+   */
+  getPlanOptions(params) {
+    return request({
+      url: `${ANALYSIS_BASE_URL}/analytics/options/plans`,
+      method: "get",
+      params: {
+        game_id: params?.game_id,
+        platform_id: params?.platform_id,
+        channel_id: params?.channel_id,
+        days: params?.days || 30,
+      },
+      customHandleResponse: true,
+    });
+  },
 };
 
 export default AnalysisAPI;

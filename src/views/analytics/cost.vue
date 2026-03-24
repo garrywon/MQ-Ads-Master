@@ -427,7 +427,7 @@ const searchForm = ref({
   channelIds: [],
   gameIds: [],
   groupBy: ["report_date", "game_id", "channel_id"],
-  metrics: ["spend", "impressions", "clicks", "installs", "ctr"],
+  metrics: ["spend", "impressions", "clicks", "installs", "ctr", "cvr"],
 });
 
 // 平台选项（从API动态获取）
@@ -519,8 +519,8 @@ const cols = ref([
   { label: "展示数", align: "center", prop: "impressions", minWidth: 128, sortable: true },
   { label: "点击数", align: "center", prop: "clicks", minWidth: 128, sortable: true },
   { label: "激活数", align: "center", prop: "installs", minWidth: 128, sortable: true },
-  { label: "CVR", align: "center", prop: "cvr", minWidth: 128, sortable: true },
   { label: "CTR", align: "center", prop: "ctr", minWidth: 128, sortable: true },
+  { label: "CVR", align: "center", prop: "cvr", minWidth: 128, sortable: true },
 ]);
 
 // 动态计算要显示的列（基于分组选择和指标选择，保持 cols 拖拽后的顺序）
@@ -869,6 +869,8 @@ const handleQueryClick = async () => {
     searchForm.value.groupBy = ["report_date"]; // 自动恢复
     return;
   }
+
+  await loadCampaignOptions();
 
   console.log("handleQueryClick called");
   // 使用新的搜索表单数据
@@ -1478,7 +1480,7 @@ const handleReset = async () => {
     channelIds: [], // 重置为空（无默认筛选）
     gameIds: [], // 重置为空（无默认筛选）
     groupBy: ["report_date", "game_id", "channel_id"],
-    metrics: ["spend", "impressions", "clicks", "installs", "ctr"],
+    metrics: ["spend", "impressions", "clicks", "installs", "ctr", "cvr"],
   };
   handleQueryClick();
 };
@@ -1603,14 +1605,18 @@ const loadGameOptions = async () => {
 // 加载计划选项
 const loadCampaignOptions = async () => {
   try {
-    // TODO: 调用后端接口获取计划列表
-    // const response = await AnalysisAPI.getCampaignOptions();
-    // 临时使用静态数据或从现有数据提取
-    const response = []; // 暂时为空数组，待后端提供接口
+    const params = {
+      game_id: searchForm.value.gameIds?.[0],
+      platform_id: searchForm.value.platforms?.[0],
+      channel_id: searchForm.value.channelIds?.[0],
+      days: 30,
+    };
+
+    const response = await AnalysisAPI.getPlanOptions(params);
 
     campaignOptions.value = (response || []).map((item) => ({
-      value: item.campaign_name || item.name || String(item.id),
-      label: item.campaign_name || item.name || String(item.id),
+      value: item.name,
+      label: item.name,
     }));
 
     return true;
@@ -1707,17 +1713,17 @@ defineExpose({});
 }
 
 .table-container {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 10px 0 20px 0;
+  overflow: visible;
   background: var(--el-bg-color-page);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: visible;
-  position: relative;
-  z-index: 1;
 }
 // 表头样式
 .el-table__header-wrapper {
@@ -1871,17 +1877,17 @@ defineExpose({});
 
 // 表格行悬停效果
 :deep(.el-table__row) {
-  transition: all 0.2s linear;
   position: relative;
   z-index: 1;
+  transition: all 0.2s linear;
 
   &:hover {
+    z-index: 10;
     cursor: pointer;
     background-color: var(--el-color-primary-light-9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transform: scale(1.01);
     transform-origin: top center;
-    z-index: 10;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 }
 

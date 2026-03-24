@@ -13,7 +13,7 @@
         >
           筛选区
         </el-text>
-        <el-form-item label="日期">
+        <el-form-item>
           <el-date-picker
             v-model="searchForm.date"
             type="daterange"
@@ -65,7 +65,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="渠道">
+        <el-form-item label="渠道名称">
           <el-select
             v-model="searchForm.channelIds"
             placeholder="请选择渠道"
@@ -84,7 +84,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="游戏">
+        <el-form-item label="游戏名称">
           <el-select
             v-model="searchForm.gameIds"
             placeholder="请选择游戏"
@@ -106,6 +106,10 @@
         </el-form-item>
         <el-form-item>
           <el-button @click="handleReset">重置</el-button>
+          <el-button style="margin-left: 12px" @click="showColumnSetting = true">
+            <el-icon class="mr-1"><Setting /></el-icon>
+            指标设置
+          </el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -124,7 +128,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="index" label="序号" width="60" align="center" fixed="left" />
-        <el-table-column v-for="col in cols" :key="col.prop" v-bind="col">
+        <el-table-column v-for="col in visibleCols" :key="col.prop" v-bind="col">
           <template #default="scope">
             <span v-if="col.prop === 'roi' || col.prop === 'roas'">
               {{ scope.row[col.prop] }}
@@ -134,6 +138,9 @@
             </span>
             <span v-else-if="col.prop === 'spend'">
               <el-text type="danger">{{ formatNumber(scope.row[col.prop]) }}</el-text>
+            </span>
+            <span v-else-if="col.prop === 'monEstimatedRevenue'">
+              <el-text type="success">{{ formatNumber(scope.row[col.prop]) }}</el-text>
             </span>
             <span v-else-if="isStringColumn(col.prop)">
               {{ scope.row[col.prop] || "-" }}
@@ -154,6 +161,35 @@
         />
       </div>
     </div>
+
+    <!-- 指标设置对话框 -->
+    <el-dialog
+      v-model="showColumnSetting"
+      title="指标设置（拖拽排序）"
+      width="600px"
+      class="column-setting-dialog"
+      :show-close="false"
+    >
+      <div class="column-setting-content">
+        <VueDraggable v-model="cols" handle=".drag-handle" animation="200">
+          <div v-for="col in cols" :key="col.prop" class="draggable-column-item">
+            <el-checkbox v-model="col.visible" :label="col.label" class="metric-checkbox" />
+            <span
+              class="drag-handle"
+              style="margin-right: 12px; margin-left: auto; color: #909399; cursor: move"
+            >
+              <el-icon><Rank /></el-icon>
+            </span>
+            <span class="column-label">{{ col.label }}</span>
+          </div>
+        </VueDraggable>
+      </div>
+      <template #footer>
+        <el-button @click="handleResetMetrics">恢复默认</el-button>
+        <el-button @click="showColumnSetting = false">取消</el-button>
+        <el-button type="primary" @click="saveColumnSetting">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -161,6 +197,8 @@
 import { ref, reactive, computed, onMounted, nextTick } from "vue";
 import { useRoute } from "vue-router";
 import { ElMessage } from "element-plus";
+import { Rank, Setting } from "@element-plus/icons-vue";
+import { VueDraggable } from "vue-draggable-plus";
 
 // 引入CopyButton组件
 import CopyButton from "@/components/CopyButton/index.vue";
@@ -203,13 +241,16 @@ const showPagination = ref(true);
 const pagination = reactive({
   currentPage: 1,
   pageSize: 50,
-  pageSizes: [10, 20, 30, 50],
+  pageSizes: [10, 20, 30, 50, 100, 200, 300],
   total: 0,
   layout: "prev, pager, next, jumper, total, sizes",
 });
 
 // 选择项
 const selectedRows = ref([]);
+
+// 指标设置相关
+const showColumnSetting = ref(false);
 
 // 格式化数字为千分位
 const formatNumber = (num, isInteger = false) => {
@@ -246,17 +287,31 @@ const isNumericColumn = (prop) => {
 
 // 判断是否为字符串列（直接显示，不格式化）
 const isStringColumn = (prop) => {
-  const stringColumns = ["date", "gameId", "gameName", "channelId", "roi", "roas"];
+  const stringColumns = ["date", "gameId", "gameName", "channelName", "roi", "roas"];
   return stringColumns.includes(prop);
 };
 
-// 表格列配置（固定顺序，所有列都显示）
+// 表格列配置（所有列都默认显示）
 const cols = ref([
-  { label: "报告日期", align: "center", prop: "date", width: 120, sortable: true },
-  { label: "游戏ID", align: "center", prop: "gameId", width: 100, sortable: true },
-  { label: "游戏名称", align: "center", prop: "gameName", minWidth: 150, sortable: true },
-  { label: "渠道ID", align: "center", prop: "channelId", width: 100, sortable: true },
-  { label: "花费", align: "center", prop: "spend", minWidth: 120, sortable: true },
+  { label: "报告日期", align: "center", prop: "date", width: 120, sortable: true, visible: true },
+  { label: "游戏ID", align: "center", prop: "gameId", width: 100, sortable: true, visible: true },
+  {
+    label: "游戏名称",
+    align: "center",
+    prop: "gameName",
+    minWidth: 150,
+    sortable: true,
+    visible: true,
+  },
+  {
+    label: "渠道",
+    align: "center",
+    prop: "channelName",
+    width: 120,
+    sortable: true,
+    visible: true,
+  },
+  { label: "花费", align: "center", prop: "spend", minWidth: 120, sortable: true, visible: true },
   {
     label: "投放-激活数",
     align: "center",
@@ -264,6 +319,7 @@ const cols = ref([
     minWidth: 120,
     sortable: true,
     integer: true,
+    visible: true,
   },
   {
     label: "投放-展示数",
@@ -272,6 +328,7 @@ const cols = ref([
     minWidth: 120,
     sortable: true,
     integer: true,
+    visible: true,
   },
   {
     label: "投放-点击数",
@@ -280,6 +337,7 @@ const cols = ref([
     minWidth: 120,
     sortable: true,
     integer: true,
+    visible: true,
   },
   {
     label: "变现-预估收入",
@@ -287,6 +345,7 @@ const cols = ref([
     prop: "monEstimatedRevenue",
     minWidth: 140,
     sortable: true,
+    visible: true,
   },
   {
     label: "变现-展示数",
@@ -295,6 +354,7 @@ const cols = ref([
     minWidth: 120,
     sortable: true,
     integer: true,
+    visible: true,
   },
   {
     label: "变现-请求数",
@@ -303,6 +363,7 @@ const cols = ref([
     minWidth: 120,
     sortable: true,
     integer: true,
+    visible: true,
   },
   {
     label: "变现-填充数",
@@ -311,6 +372,7 @@ const cols = ref([
     minWidth: 120,
     sortable: true,
     integer: true,
+    visible: true,
   },
   {
     label: "变现-点击数",
@@ -319,10 +381,11 @@ const cols = ref([
     minWidth: 120,
     sortable: true,
     integer: true,
+    visible: true,
   },
-  { label: "利润占比", align: "center", prop: "roi", width: 100, sortable: true },
-  { label: "ROAS", align: "center", prop: "roas", width: 100, sortable: true },
-  { label: "eCPM", align: "center", prop: "ecpm", minWidth: 120, sortable: true },
+  { label: "利润占比", align: "center", prop: "roi", width: 100, sortable: true, visible: true },
+  { label: "ROAS", align: "center", prop: "roas", width: 100, sortable: true, visible: true },
+  { label: "eCPM", align: "center", prop: "ecpm", minWidth: 120, sortable: true, visible: true },
 ]);
 
 // 计算列的总和
@@ -386,7 +449,7 @@ const loadData = async () => {
       date: item.report_date || "",
       gameId: item.game_id || "",
       gameName: item.game_name || "",
-      channelId: item.channel_id || "",
+      channelName: item.channel_name || "",
       spend: item.spend || 0,
       installs: item.installs || 0,
       uaImpressions: item.ua_impressions || 0,
@@ -397,12 +460,8 @@ const loadData = async () => {
       monFills: item.mon_fills || 0,
       monClicks: item.mon_clicks || 0,
       // ROI和ROAS格式化为显示百分号，后端返回的是小数（如0.5表示50%）
-      roi:
-        item.roi !== undefined && item.roi !== null ? (item.roi * 100).toFixed(2) + "%" : "0.00%",
-      roas:
-        item.roas !== undefined && item.roas !== null
-          ? (item.roas * 100).toFixed(2) + "%"
-          : "0.00%",
+      roi: item.roi !== undefined && item.roi !== null ? item.roi.toFixed(2) + "%" : "0.00%",
+      roas: item.roas !== undefined && item.roas !== null ? item.roas.toFixed(2) + "%" : "0.00%",
       ecpm: item.ecpm || 0,
     }));
 
@@ -434,6 +493,31 @@ const handleReset = async () => {
   };
   await loadData();
 };
+
+// 保存指标设置
+const saveColumnSetting = () => {
+  // 检查是否至少保留一列
+  const visibleCount = cols.value.filter((col) => col.visible).length;
+  if (visibleCount === 0) {
+    ElMessage.warning("至少需要保留一个指标");
+    return;
+  }
+  showColumnSetting.value = false;
+  ElMessage.success("指标设置已保存");
+};
+
+// 恢复默认指标设置
+const handleResetMetrics = () => {
+  cols.value.forEach((col) => {
+    col.visible = true;
+  });
+  ElMessage.info("已恢复默认设置");
+};
+
+// 计算可见列
+const visibleCols = computed(() => {
+  return cols.value.filter((col) => col.visible);
+});
 
 // 选择项变化
 const handleSelectionChange = (selection) => {
@@ -602,7 +686,7 @@ defineExpose({});
 .table-container {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 90vh;
   padding: 10px 0 20px 0;
   background: var(--el-bg-color-page);
   border-radius: 12px;
@@ -1344,6 +1428,49 @@ defineExpose({});
     color: var(--el-text-color-disabled) !important;
     background-color: var(--el-fill-color-extra-light) !important;
     border-color: var(--el-border-color-lighter) !important;
+  }
+}
+
+// 指标复选框样式
+.metric-checkbox {
+  flex-shrink: 0;
+  margin-right: 12px;
+
+  :deep(.el-checkbox__label) {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--el-text-color-primary);
+  }
+}
+
+// 拖拽项样式
+.draggable-column-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background: var(--el-bg-color-overlay);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: var(--el-color-primary-light-9);
+    border-color: var(--el-color-primary-light-3);
+    box-shadow: 0 2px 8px rgba(64, 128, 255, 0.1);
+  }
+
+  &.sortable-ghost {
+    background: var(--el-color-primary-light-8);
+    border: 2px dashed var(--el-color-primary);
+    opacity: 0.5;
+  }
+
+  .column-label {
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--el-text-color-primary);
   }
 }
 </style>

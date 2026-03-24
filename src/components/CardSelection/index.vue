@@ -1,315 +1,335 @@
 <template>
   <Transition name="card-appear" mode="out-in">
     <div class="card-mode-container">
-    <!-- 步骤指示器 -->
-    <div class="step-indicator">
-      <el-steps :active="cardSelection.currentStep - 1" finish-status="success">
-        <el-step title="选择渠道" />
-        <el-step title="选择方向" />
-        <el-step
-          :title="cardSelection.selectionMode === 'game-platform' ? '选择游戏' : '选择广告平台'"
-        />
-        <el-step
-          :title="cardSelection.selectionMode === 'game-platform' ? '选择广告平台' : '选择游戏'"
-        />
-      </el-steps>
-    </div>
+      <!-- 步骤指示器 -->
+      <div class="step-indicator">
+        <el-steps :active="cardSelection.currentStep - 1" finish-status="success">
+          <el-step title="选择渠道" />
+          <el-step title="选择方向" />
+          <el-step
+            :title="cardSelection.selectionMode === 'game-platform' ? '选择游戏' : '选择广告平台'"
+          />
+          <el-step
+            :title="cardSelection.selectionMode === 'game-platform' ? '选择广告平台' : '选择游戏'"
+          />
+        </el-steps>
+      </div>
 
-    <!-- 步骤操作按钮 -->
-    <div class="step-actions-top">
-      <el-button @click="emit('exit')">
-        <el-icon><ArrowLeft /></el-icon>
-        退出
-      </el-button>
-      <el-button v-if="cardSelection.currentStep > 1" @click="emit('prevStep')">
-        <el-icon><ArrowLeft /></el-icon>
-        上一步
-      </el-button>
-      <el-button
-        v-if="cardSelection.currentStep < 4"
-        type="primary"
-        :disabled="!canGoNext"
-        @click="emit('nextStep')"
-      >
-        下一步
-        <el-icon><ArrowRight /></el-icon>
-      </el-button>
-      <el-button
-        v-if="cardSelection.currentStep === 4"
-        type="primary"
-        :loading="loading"
-        @click="emit('confirmQuery')"
-      >
-        <el-icon><Search /></el-icon>
-        查询数据
-      </el-button>
-    </div>
+      <!-- 步骤操作按钮 -->
+      <div class="step-actions-top">
+        <el-button @click="emit('exit')">
+          <el-icon><ArrowLeft /></el-icon>
+          退出
+        </el-button>
+        <el-button v-if="cardSelection.currentStep > 1" @click="emit('prevStep')">
+          <el-icon><ArrowLeft /></el-icon>
+          上一步
+        </el-button>
+        <el-button
+          v-if="cardSelection.currentStep < 4"
+          type="primary"
+          :disabled="!canGoNext"
+          @click="emit('nextStep')"
+        >
+          下一步
+          <el-icon><ArrowRight /></el-icon>
+        </el-button>
+        <el-button
+          v-if="cardSelection.currentStep === 4"
+          type="primary"
+          :loading="loading"
+          @click="emit('confirmQuery')"
+        >
+          <el-icon><Search /></el-icon>
+          查询数据
+        </el-button>
+      </div>
 
-    <!-- 步骤内容 -->
-    <div class="step-content">
-      <transition :name="transitionName" mode="out-in">
-        <!-- 步骤1：渠道选择 -->
-        <div v-if="cardSelection.currentStep === 1" class="step-panel" :key="1">
-          <div class="selection-container">
-            <div class="selection-left">
-              <div class="step-title">请选择渠道</div>
-              <div v-if="stepLoading" class="step-loading">
-                <el-icon class="is-loading"><Loading /></el-icon>
-                加载中...
-              </div>
-              <div v-else-if="stepData.channels.length === 0" class="empty-tip">暂无可用渠道</div>
-              <div v-else class="card-grid">
-                <div
-                  v-for="channel in stepData.channels"
-                  :key="channel.value"
-                  class="selection-card"
-                  :class="{ active: cardSelection.selectedChannel === channel.value }"
-                  @click="emit('selectChannel', channel)"
-                >
-                  <div class="card-icon">
-                    <el-icon><Connection /></el-icon>
+      <!-- 步骤内容 -->
+      <div class="step-content">
+        <transition :name="transitionName" mode="out-in">
+          <!-- 步骤1：渠道选择 -->
+          <div v-if="cardSelection.currentStep === 1" class="step-panel" :key="1">
+            <div class="selection-container">
+              <div class="selection-left">
+                <div class="step-title">请选择渠道</div>
+                <div v-if="stepLoading" class="step-loading">
+                  <el-icon class="is-loading"><Loading /></el-icon>
+                  加载中...
+                </div>
+                <div v-else-if="stepData.channels.length === 0" class="empty-tip">暂无可用渠道</div>
+                <div v-else class="card-grid">
+                  <div
+                    v-for="channel in stepData.channels"
+                    :key="channel.value"
+                    class="selection-card"
+                    :class="{ active: cardSelection.selectedChannel === channel.value }"
+                    @click="emit('selectChannel', channel)"
+                  >
+                    <div class="card-icon">
+                      <el-icon><Connection /></el-icon>
+                    </div>
+                    <div class="card-name">{{ channel.label }}</div>
                   </div>
-                  <div class="card-name">{{ channel.label }}</div>
                 </div>
               </div>
-            </div>
-            <div class="selection-right">
-              <div class="selection-summary">
-                <div class="summary-title">已选择信息</div>
-                <div class="summary-item">
-                  <span class="label">日期：</span>
-                  <el-tag>{{ cardSelection.past7Days || "过去7日" }}</el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">渠道：</span>
-                  <el-tag type="primary">
-                    {{ cardSelection.selectedChannelName || "待选择" }}
-                  </el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">游戏：</span>
-                  <el-tag type="warning">{{ cardSelection.selectedGameName || "全部" }}</el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">平台：</span>
-                  <el-tag type="success">{{ cardSelection.selectedPlatformName || "全部" }}</el-tag>
+              <div class="selection-right">
+                <div class="selection-summary">
+                  <div class="summary-title">已选择信息</div>
+                  <div class="summary-item">
+                    <span class="label">日期：</span>
+                    <el-tag>{{ cardSelection.past7Days || "过去7日" }}</el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">渠道：</span>
+                    <el-tag type="primary">
+                      {{ cardSelection.selectedChannelName || "待选择" }}
+                    </el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">游戏：</span>
+                    <el-tag type="warning">{{ cardSelection.selectedGameName || "全部" }}</el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">平台：</span>
+                    <el-tag type="success">
+                      {{ cardSelection.selectedPlatformName || "全部" }}
+                    </el-tag>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 步骤2：选择方向 -->
-        <div v-else-if="cardSelection.currentStep === 2" class="step-panel" :key="2">
-          <div class="selection-container">
-            <div class="selection-left">
-              <div class="step-title">请选择查询方向</div>
-              <div class="mode-selection">
-                <div
-                  class="mode-card"
-                  :class="{ active: cardSelection.selectionMode === 'game-platform' }"
-                  @click="emit('update:selectionMode', 'game-platform')"
-                >
-                  <div class="mode-icon">
-                    <el-icon><Trophy /></el-icon>
+          <!-- 步骤2：选择方向 -->
+          <div v-else-if="cardSelection.currentStep === 2" class="step-panel" :key="2">
+            <div class="selection-container">
+              <div class="selection-left">
+                <div class="step-title">请选择查询方向</div>
+                <div class="mode-selection">
+                  <div
+                    class="mode-card"
+                    :class="{ active: cardSelection.selectionMode === 'game-platform' }"
+                    @click="emit('update:selectionMode', 'game-platform')"
+                  >
+                    <div class="mode-icon">
+                      <el-icon><Trophy /></el-icon>
+                    </div>
+                    <div class="mode-content">
+                      <div class="mode-title">游戏 → 广告平台</div>
+                      <div class="mode-desc">选择游戏，查看该游戏有数据的所有广告平台</div>
+                    </div>
                   </div>
-                  <div class="mode-content">
-                    <div class="mode-title">游戏 → 广告平台</div>
-                    <div class="mode-desc">选择游戏，查看该游戏有数据的所有广告平台</div>
-                  </div>
-                </div>
-                <div
-                  class="mode-card"
-                  :class="{ active: cardSelection.selectionMode === 'platform-game' }"
-                  @click="emit('update:selectionMode', 'platform-game')"
-                >
-                  <div class="mode-icon">
-                    <el-icon><Monitor /></el-icon>
-                  </div>
-                  <div class="mode-content">
-                    <div class="mode-title">广告平台 → 游戏</div>
-                    <div class="mode-desc">选择广告平台，查看该平台有数据的所有游戏</div>
+                  <div
+                    class="mode-card"
+                    :class="{ active: cardSelection.selectionMode === 'platform-game' }"
+                    @click="emit('update:selectionMode', 'platform-game')"
+                  >
+                    <div class="mode-icon">
+                      <el-icon><Monitor /></el-icon>
+                    </div>
+                    <div class="mode-content">
+                      <div class="mode-title">广告平台 → 游戏</div>
+                      <div class="mode-desc">选择广告平台，查看该平台有数据的所有游戏</div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div class="selection-right">
-              <div class="selection-summary">
-                <div class="summary-title">已选择信息</div>
-                <div class="summary-item">
-                  <span class="label">日期：</span>
-                  <el-tag>{{ cardSelection.past7Days || "过去7日" }}</el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">渠道：</span>
-                  <el-tag type="primary">
-                    {{ cardSelection.selectedChannelName || "待选择" }}
-                  </el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">游戏：</span>
-                  <el-tag type="warning">{{ cardSelection.selectedGameName || "全部" }}</el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">平台：</span>
-                  <el-tag type="success">{{ cardSelection.selectedPlatformName || "全部" }}</el-tag>
+              <div class="selection-right">
+                <div class="selection-summary">
+                  <div class="summary-title">已选择信息</div>
+                  <div class="summary-item">
+                    <span class="label">日期：</span>
+                    <el-tag>{{ cardSelection.past7Days || "过去7日" }}</el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">渠道：</span>
+                    <el-tag type="primary">
+                      {{ cardSelection.selectedChannelName || "待选择" }}
+                    </el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">游戏：</span>
+                    <el-tag type="warning">{{ cardSelection.selectedGameName || "全部" }}</el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">平台：</span>
+                    <el-tag type="success">
+                      {{ cardSelection.selectedPlatformName || "全部" }}
+                    </el-tag>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 步骤3：第一级选择（游戏或广告平台） -->
-        <div v-else-if="cardSelection.currentStep === 3" class="step-panel" :key="3">
-          <div class="selection-container">
-            <div class="selection-left">
-              <div class="step-title">
-                {{
-                  cardSelection.selectionMode === "game-platform" ? "请选择游戏" : "请选择广告平台"
-                }}
-              </div>
-              <!-- 搜索框 -->
-              <div class="search-box">
-                <el-input
-                  v-model="searchQuery"
-                  placeholder="搜索..."
-                  clearable
-                  :prefix-icon="Search"
-                />
-              </div>
-              <div v-if="stepLoading" class="step-loading">
-                <el-icon class="is-loading"><Loading /></el-icon>
-                加载中...
-              </div>
-              <div v-else-if="filteredFirstLevelItems.length === 0" class="empty-tip">
-                暂无可用{{ cardSelection.selectionMode === "game-platform" ? "游戏" : "广告平台" }}
-              </div>
-              <div v-else class="card-grid">
-                <div
-                  v-for="item in filteredFirstLevelItems"
-                  :key="item.value"
-                  class="selection-card"
-                  :class="{
-                    active:
-                      (cardSelection.selectionMode === 'game-platform'
-                        ? cardSelection.selectedGame
-                        : cardSelection.selectedPlatform) === item.value,
-                  }"
-                  @click="emit('selectFirstLevel', item)"
-                >
-                  <div class="card-icon">
-                    <el-icon>
-                      <component
-                        :is="cardSelection.selectionMode === 'game-platform' ? 'Trophy' : 'Monitor'"
-                      />
-                    </el-icon>
+          <!-- 步骤3：第一级选择（游戏或广告平台） -->
+          <div v-else-if="cardSelection.currentStep === 3" class="step-panel" :key="3">
+            <div class="selection-container">
+              <div class="selection-left">
+                <div class="step-title">
+                  {{
+                    cardSelection.selectionMode === "game-platform"
+                      ? "请选择游戏"
+                      : "请选择广告平台"
+                  }}
+                </div>
+                <!-- 搜索框 -->
+                <div class="search-box">
+                  <el-input
+                    v-model="searchQuery"
+                    placeholder="搜索..."
+                    clearable
+                    :prefix-icon="Search"
+                  />
+                </div>
+                <div v-if="stepLoading" class="step-loading">
+                  <el-icon class="is-loading"><Loading /></el-icon>
+                  加载中...
+                </div>
+                <div v-else-if="filteredFirstLevelItems.length === 0" class="empty-tip">
+                  暂无可用{{
+                    cardSelection.selectionMode === "game-platform" ? "游戏" : "广告平台"
+                  }}
+                </div>
+                <div v-else class="card-grid">
+                  <div
+                    v-for="item in filteredFirstLevelItems"
+                    :key="item.value"
+                    class="selection-card"
+                    :class="{
+                      active:
+                        (cardSelection.selectionMode === 'game-platform'
+                          ? cardSelection.selectedGame
+                          : cardSelection.selectedPlatform) === item.value,
+                    }"
+                    @click="emit('selectFirstLevel', item)"
+                  >
+                    <div class="card-icon">
+                      <el-icon>
+                        <component
+                          :is="
+                            cardSelection.selectionMode === 'game-platform' ? 'Trophy' : 'Monitor'
+                          "
+                        />
+                      </el-icon>
+                    </div>
+                    <div class="card-name">{{ item.label }}</div>
                   </div>
-                  <div class="card-name">{{ item.label }}</div>
                 </div>
               </div>
-            </div>
-            <div class="selection-right">
-              <div class="selection-summary">
-                <div class="summary-title">已选择信息</div>
-                <div class="summary-item">
-                  <span class="label">日期：</span>
-                  <el-tag>{{ cardSelection.past7Days || "过去7日" }}</el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">渠道：</span>
-                  <el-tag type="primary">
-                    {{ cardSelection.selectedChannelName || "待选择" }}
-                  </el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">游戏：</span>
-                  <el-tag type="warning">{{ cardSelection.selectedGameName || "全部" }}</el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">平台：</span>
-                  <el-tag type="success">{{ cardSelection.selectedPlatformName || "全部" }}</el-tag>
+              <div class="selection-right">
+                <div class="selection-summary">
+                  <div class="summary-title">已选择信息</div>
+                  <div class="summary-item">
+                    <span class="label">日期：</span>
+                    <el-tag>{{ cardSelection.past7Days || "过去7日" }}</el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">渠道：</span>
+                    <el-tag type="primary">
+                      {{ cardSelection.selectedChannelName || "待选择" }}
+                    </el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">游戏：</span>
+                    <el-tag type="warning">{{ cardSelection.selectedGameName || "全部" }}</el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">平台：</span>
+                    <el-tag type="success">
+                      {{ cardSelection.selectedPlatformName || "全部" }}
+                    </el-tag>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- 步骤4：第二级选择（广告平台或游戏） -->
-        <div v-else-if="cardSelection.currentStep === 4" class="step-panel" :key="4">
-          <div class="selection-container">
-            <div class="selection-left">
-              <div class="step-title">
-                {{
-                  cardSelection.selectionMode === "game-platform" ? "请选择广告平台" : "请选择游戏"
-                }}
-              </div>
-              <!-- 搜索框 -->
-              <div class="search-box">
-                <el-input
-                  v-model="searchQuery"
-                  placeholder="搜索..."
-                  clearable
-                  :prefix-icon="Search"
-                />
-              </div>
-              <div v-if="stepLoading" class="step-loading">
-                <el-icon class="is-loading"><Loading /></el-icon>
-                加载中...
-              </div>
-              <div v-else-if="filteredSecondLevelItems.length === 0" class="empty-tip">
-                暂无可用{{ cardSelection.selectionMode === "game-platform" ? "广告平台" : "游戏" }}
-              </div>
-              <div v-else class="card-grid">
-                <div
-                  v-for="item in filteredSecondLevelItems"
-                  :key="item.value"
-                  class="selection-card"
-                  :class="{
-                    active:
-                      (cardSelection.selectionMode === 'game-platform'
-                        ? cardSelection.selectedPlatform
-                        : cardSelection.selectedGame) === item.value,
-                  }"
-                  @click="emit('selectSecondLevel', item)"
-                >
-                  <div class="card-icon">
-                    <el-icon>
-                      <component
-                        :is="cardSelection.selectionMode === 'game-platform' ? 'Monitor' : 'Trophy'"
-                      />
-                    </el-icon>
+          <!-- 步骤4：第二级选择（广告平台或游戏） -->
+          <div v-else-if="cardSelection.currentStep === 4" class="step-panel" :key="4">
+            <div class="selection-container">
+              <div class="selection-left">
+                <div class="step-title">
+                  {{
+                    cardSelection.selectionMode === "game-platform"
+                      ? "请选择广告平台"
+                      : "请选择游戏"
+                  }}
+                </div>
+                <!-- 搜索框 -->
+                <div class="search-box">
+                  <el-input
+                    v-model="searchQuery"
+                    placeholder="搜索..."
+                    clearable
+                    :prefix-icon="Search"
+                  />
+                </div>
+                <div v-if="stepLoading" class="step-loading">
+                  <el-icon class="is-loading"><Loading /></el-icon>
+                  加载中...
+                </div>
+                <div v-else-if="filteredSecondLevelItems.length === 0" class="empty-tip">
+                  暂无可用{{
+                    cardSelection.selectionMode === "game-platform" ? "广告平台" : "游戏"
+                  }}
+                </div>
+                <div v-else class="card-grid">
+                  <div
+                    v-for="item in filteredSecondLevelItems"
+                    :key="item.value"
+                    class="selection-card"
+                    :class="{
+                      active:
+                        (cardSelection.selectionMode === 'game-platform'
+                          ? cardSelection.selectedPlatform
+                          : cardSelection.selectedGame) === item.value,
+                    }"
+                    @click="emit('selectSecondLevel', item)"
+                  >
+                    <div class="card-icon">
+                      <el-icon>
+                        <component
+                          :is="
+                            cardSelection.selectionMode === 'game-platform' ? 'Monitor' : 'Trophy'
+                          "
+                        />
+                      </el-icon>
+                    </div>
+                    <div class="card-name">{{ item.label }}</div>
                   </div>
-                  <div class="card-name">{{ item.label }}</div>
                 </div>
               </div>
-            </div>
-            <div class="selection-right">
-              <div class="selection-summary">
-                <div class="summary-title">已选择信息</div>
-                <div class="summary-item">
-                  <span class="label">日期：</span>
-                  <el-tag>{{ cardSelection.past7Days || "过去7日" }}</el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">渠道：</span>
-                  <el-tag type="primary">
-                    {{ cardSelection.selectedChannelName || "待选择" }}
-                  </el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">游戏：</span>
-                  <el-tag type="warning">{{ cardSelection.selectedGameName || "全部" }}</el-tag>
-                </div>
-                <div class="summary-item">
-                  <span class="label">平台：</span>
-                  <el-tag type="success">{{ cardSelection.selectedPlatformName || "全部" }}</el-tag>
+              <div class="selection-right">
+                <div class="selection-summary">
+                  <div class="summary-title">已选择信息</div>
+                  <div class="summary-item">
+                    <span class="label">日期：</span>
+                    <el-tag>{{ cardSelection.past7Days || "过去7日" }}</el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">渠道：</span>
+                    <el-tag type="primary">
+                      {{ cardSelection.selectedChannelName || "待选择" }}
+                    </el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">游戏：</span>
+                    <el-tag type="warning">{{ cardSelection.selectedGameName || "全部" }}</el-tag>
+                  </div>
+                  <div class="summary-item">
+                    <span class="label">平台：</span>
+                    <el-tag type="success">
+                      {{ cardSelection.selectedPlatformName || "全部" }}
+                    </el-tag>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      </transition>
-    </div>
+        </transition>
+      </div>
     </div>
   </Transition>
 </template>
@@ -448,11 +468,11 @@ const transitionName = computed(() => {
 }
 
 .selection-right {
-  flex-shrink: 0;
-  width: 380px;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  width: 380px;
   border-left: 4px solid var(--el-border-color-lighter);
 }
 
@@ -461,7 +481,7 @@ const transitionName = computed(() => {
   background: var(--el-bg-color-overlay);
   border-radius: 28px;
   box-shadow: 0 4px 12px rgba(64, 128, 255, 0.15);
-  box-shadow: 
+  box-shadow:
     inset 0 2px 4px rgba(0, 0, 0, 0.06),
     0 1px 2px rgba(0, 0, 0, 0.04);
 }
@@ -665,9 +685,9 @@ const transitionName = computed(() => {
 }
 
 .selection-summary {
+  width: 80%;
   padding: 30px 20px 30px 20px;
   margin: auto;
-  width: 80%;
   background: var(--el-bg-colors-overlay);
   border-radius: 18px;
   box-shadow:
