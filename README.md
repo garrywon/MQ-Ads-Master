@@ -1,171 +1,129 @@
 <div align="center">
-  <img alt="vue3-element-admin-js" width="80" height="80" src="./src/assets/logo.png">
-  <h1>vue3-element-admin-js</h1>
+  <img alt="MQ Ads Master" width="120" height="120" src="./src/assets/icons/logo3.svg">
+  <h1>MQ Ads Master</h1>
+  <p>萌趣三方广告数据管理系统</p>
 
-  <img src="https://img.shields.io/badge/Vue-3.5.13-brightgreen.svg"/>
-  <img src="https://img.shields.io/badge/Vite-6.3.2-green.svg"/>
-  <img src="https://img.shields.io/badge/Element Plus-2.9.8-blue.svg"/>
+  <img src="https://img.shields.io/badge/Vue-3.5-brightgreen.svg"/>
+  <img src="https://img.shields.io/badge/Vite-7.3-green.svg"/>
+  <img src="https://img.shields.io/badge/Element%20Plus-2.9-blue.svg"/>
+  <img src="https://img.shields.io/badge/Pinia-3.0-orange.svg"/>
   <img src="https://img.shields.io/badge/license-MIT-green.svg"/>
-  <a href="https://gitee.com/youlaiorg" target="_blank">
-      <img src="https://img.shields.io/badge/Author-有来开源组织-orange.svg"/>
-  </a>
-
-  <a href="https://gitee.com/youlaiorg/vue3-element-admin" target="_blank">
-    <img alt="有来技术" src="https://gitee.com/youlaiorg/vue3-element-admin/badge/star.svg"/>
-   </a>
-  <a href="https://github.com/youlaitech/vue3-element-admin" target="_blank">
-    <img alt="有来技术" src="https://img.shields.io/github/stars/youlaitech/vue3-element-admin.svg?style=social&label=Stars"/>
-  </a>
-  <a href="https://gitcode.com/youlai/vue3-element-admin" target="_blank">
-    <img alt="有来技术" src="https://gitcode.com/youlai/vue3-element-admin/star/badge.svg"/>
-  </a>
-
-</div>
-
-![](https://foruda.gitee.com/images/1708618984641188532/a7cca095_716974.png "rainbow.png")
-
-<div align="center">
-  <a target="_blank" href="https://vue.youlai.tech">🖥️ 在线预览</a> |  <a target="_blank" href="https://juejin.cn/post/7228990409909108793">📑 阅读文档</a>|  <a target="_blank" href="https://www.youlai.tech//vue3-element-admin">🌐 官网</a> | <a href="./README.en-US.md">💬 English
 </div>
 
 ## 项目简介
 
-[vue3-element-admin-js](https://gitee.com/youlaiorg/vue3-element-admin-js) 基于 Vue3、Vite、JavaScript 和 Element-Plus 搭建的极简开箱即用企业级后台管理前端模板。 （配套 Java 后端 [youlai-boot](https://gitee.com/youlaiorg/youlai-boot) 和 Node 后端 [youlai-nest](https://gitee.com/youlaiorg/youlai-nest)）。
+MQ Ads Master 是一款面向广告运营人员的广告数据管理系统，支持多广告平台（小米、MTG、BIGO）的广告投放管理和数据分析，帮助运营人员高效管理广告投放、监控投放效果、优化 ROI。
 
-## 项目特色
+## 功能特性
 
-- **简洁易用**：基于 [vue3-element-admin](https://gitee.com/youlaiorg/vue3-element-admin) 的 JavaScript 版本，适合快速开发。
-- **数据交互**： 支持 `Mock` 数据和[线上接口文档](https://www.apifox.cn/apidoc/shared-195e783f-4d85-4235-a038-eec696de4ea5)，并提供配套的 [Java](https://gitee.com/youlaiorg/youlai-boot) 和 [Node](https://gitee.com/youlaiorg/youlai-nest) 后端源码。
+### 广告投放管理
 
-- **系统功能：** 提供用户管理、角色管理、菜单管理、部门管理、字典管理等功能模块。
-- **权限管理：** 支持动态路由、按钮权限、角色权限和数据权限等多种权限管理方式。
+- **小米广告 (MIAds)**：广告计划、广告组、广告创意三层管理，支持预算修改、状态控制、多账户切换
+- **MTG广告 (MTGAds)**：广告层级管理，支持单图/多图/视频创意组装
+- **BIGO广告**：统一的数据模型和操作接口
 
-- **基础设施：** 提供国际化、多布局、暗黑模式、全屏、水印、接口文档和代码生成器等功能。
-- **持续更新**：项目持续开源更新，实时更新工具和依赖。
+### 数据分析中心
 
-## 项目截图
+| 模块 | 说明 |
+|------|------|
+| **综合分析** | ROI分析、投放/变现数据对比、指标自定义配置 |
+| **收入分析** | 变现收入统计，支持多维度筛选 |
+| **成本分析** | 投放成本统计，实时监控花费 |
+| **渠道分析** | 按渠道维度分析，评估渠道效果 |
+| **数据获取** | 从各广告平台拉取数据，保持数据同步 |
 
-![](https://www.youlai.tech/storage/blog/2025/01/18/20250118160647.png)
+**分析指标**：花费、激活数、投放展示/点击、变现预估收入、ROI、ROAS、eCPM 等
 
-![](https://www.youlai.tech/storage/blog/2025/01/18/20250118183539.png)
+### 系统管理
 
-## 项目源码
+| 模块 | 功能 |
+|------|------|
+| 用户管理 | 用户 CRUD、导入导出、密码重置 |
+| 角色管理 | 角色权限分配 |
+| 菜单管理 | 动态菜单配置 |
+| 部门管理 | 组织架构管理 |
+| 字典管理 | 数据字典维护 |
+| 日志管理 | 操作日志记录 |
+| 通知管理 | 系统通知发布/撤回 |
+| 租户管理 | 多租户支持 |
 
-| 项目                      | Gitee                                                                      | Github                                                                       | GitCode                                                                   |
-| ------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| vue3-element-admin JS版   | [vue3-element-admin-js](https://gitee.com/youlaiorg/vue3-element-admin-js) | [vue3-element-admin-js](https://github.com/youlaitech/vue3-element-admin-js) | [vue3-element-admin-js](https://gitcode.com/youlai/vue3-element-admin-js) |
-| vue3-element-admin 标准版 | [vue3-element-admin](https://gitee.com/youlaiorg/vue3-element-admin)       | [vue3-element-admin](https://github.com/youlaitech/vue3-element-admin)       | [vue3-element-admin](https://gitcode.com/youlai/vue3-element-admin)       |
-| vue3-element-admin 精简版 | [vue3-element-template](https://gitee.com/youlaiorg/vue3-element-template) | [vue3-element-template](https://github.com/youlaitech/vue3-element-template) | -                                                                         |
-| Java 后端                 | [youlai-boot](https://gitee.com/youlaiorg/youlai-boot)                     | [youlai-boot](https://github.com/haoxianrui/youlai-boot.git)                 | [youlai-boot](https://gitcode.com/youlai/youlai-boot.git)                 |
-| Node 后端                 | [youlai-nest](https://gitee.com/youlaiorg/youlai-nest)                     | [youlai-nest](https://github.com/haoxianrui/youlai-nest.git)                 | [youlai-nest](https://gitcode.com/youlai/youlai-nest.git)                 |
+### 特色功能
 
-## 项目文档
+- **动态路由**：基于权限的动态菜单生成
+- **实时推送**：WebSocket + STOMP 消息推送
+- **多主题**：亮色/暗色模式切换
+- **多布局**：左侧菜单、顶部菜单、混合布局
+- **全屏模式**：沉浸式操作体验
+- **多语言**：中英文切换
+- **标签导航**：多标签页管理
 
-| 文档名称     | 访问地址                                                                                                                           |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| 项目 0 到 1  | [基于 Vue3 + Vite + Element-Plus 从0到1搭建后台管理系统](https://blog.csdn.net/u013737132/article/details/130191394)               |
-| 官方文档     | [https://www.youlai.tech/vue3-element-admin/](https://www.youlai.tech/vue3-element-admin/)                                         |
-| 代码规范     | [ESLint V9 + Prettier + Stylelint + EditorConfig 约束和统一前端代码规范](https://youlai.blog.csdn.net/article/details/145608723)   |
-| Git 规范     | [Husky + Lint-staged + Commitlint + Commitizen + cz-git 配置 Git 提交规范](https://youlai.blog.csdn.net/article/details/145615236) |
-| 在线接口文档 | [https://www.apifox.cn/apidoc](https://www.apifox.cn/apidoc/shared-195e783f-4d85-4235-a038-eec696de4ea5)                           |
+## 技术栈
 
-## 项目启动
+| 分类 | 技术 |
+|------|------|
+| 前端框架 | Vue 3.5 |
+| 构建工具 | Vite 7.3 |
+| UI 组件库 | Element Plus 2.9 |
+| 状态管理 | Pinia 3.0 |
+| 路由管理 | Vue Router 5 |
+| HTTP 客户端 | Axios |
+| 图表库 | ECharts 6 |
+| 国际化 | Vue I18n |
 
-- **环境准备**
+## 项目结构
 
-| 环境类型     | 版本要求                    | 下载链接                                                 |
-| ------------ | --------------------------- | -------------------------------------------------------- |
-| **开发工具** | Visual Studio Code (最新版) | [官方下载](https://code.visualstudio.com/Download)       |
-| **运行环境** | Node.js 18.x (推荐18.16.1)  | [中文镜像](https://npmmirror.com/mirrors/node/v18.16.1/) |
+```
+MQ-Ads-Master/
+├── src/
+│   ├── api/              # API 接口层
+│   ├── assets/            # 静态资源
+│   ├── components/        # 公共组件
+│   ├── composables/       # 组合式函数
+│   ├── constants/         # 常量定义
+│   ├── directives/         # 指令
+│   ├── enums/             # 枚举类型
+│   ├── layouts/           # 布局组件
+│   ├── router/            # 路由配置
+│   ├── store/             # 状态管理
+│   ├── utils/             # 工具函数
+│   ├── views/             # 页面组件
+│   ├── App.vue
+│   └── main.js
+├── doc/                   # 文档目录
+├── public/                # 公共资源
+├── run.bat                # 一键启动脚本
+├── package.json
+├── vite.config.js
+└── README.md
+```
 
-> ⚠️ 注意：Node.js 20.6.0版本存在兼容性问题，请勿使用
+## 快速开始
 
-- **快速开始**
+### 环境要求
+
+- Node.js >= 20.19.0
+
+### 启动方式
+
+双击运行项目根目录下的 `run.bat` 脚本，即可自动检测环境、安装依赖并启动项目。
+
+或者手动执行以下命令：
 
 ```bash
-# 克隆代码
-git clone https://gitee.com/youlaiorg/vue3-element-admin.git
-
-# 切换目录
-cd vue3-element-admin
-
 # 安装 pnpm
 npm install pnpm -g
-
-# 设置镜像源(可忽略)
-pnpm config set registry https://registry.npmmirror.com
 
 # 安装依赖
 pnpm install
 
-# 启动运行
+# 启动开发服务器
 pnpm run dev
 ```
 
-## 项目部署
+### 访问地址
 
-执行 `pnpm run build` 命令后，项目将被打包并生成 `dist` 目录。接下来，将 `dist` 目录下的文件上传到服务器 `/usr/share/nginx/html` 目录下，并配置 Nginx 进行反向代理。
+启动成功后，访问 http://localhost:3000
 
-```bash
-pnpm run build
-```
+## License
 
-以下是 Nginx 的配置示例：
-
-```nginx
-server {
-    listen      80;
-    server_name localhost;
-
-    location / {
-        root   /usr/share/nginx/html;
-        index  index.html index.htm;
-    }
-
-    # 反向代理配置
-    location /prod-api/ {
-        # 请将 api.youlai.tech 替换为您的后端 API 地址，并注意保留后面的斜杠 /
-        proxy_pass http://api.youlai.tech/;
-    }
-}
-```
-
-更多详细信息，请参考这篇文章：[Nginx 安装和配置](https://blog.csdn.net/u013737132/article/details/145667694)。
-
-## 本地Mock
-
-项目同时支持在线和本地 Mock 接口，默认使用线上接口，如需替换为 Mock 接口，修改文件 `.env.development` 的 `VITE_MOCK_DEV_SERVER` 为 `true` **即可**。
-
-## 后端接口
-
-> 如果您具备Java开发基础，按照以下步骤将在线接口转为本地后端接口，创建企业级前后端分离开发环境，助您走向全栈之路。
-
-1. 获取基于 `Java` 和 `SpringBoot` 开发的后端 [youlai-boot](https://gitee.com/youlaiorg/youlai-boot.git) 源码。
-2. 根据后端工程的说明文档 [README.md](https://gitee.com/youlaiorg/youlai-boot#%E9%A1%B9%E7%9B%AE%E8%BF%90%E8%A1%8C) 完成本地启动。
-3. 修改 `.env.development` 文件中的 `VITE_APP_API_URL` 的值，将其从 https://api.youlai.tech 更改为 http://localhost:8989 即可。
-
-## 提交规范
-
-执行 `pnpm run commit` 唤起 git commit 交互，根据提示完成信息的输入和选择。
-
-![](https://foruda.gitee.com/images/1687755823165218215/c1705416_716974.png)
-
-## 项目统计
-
-![](https://repobeats.axiom.co/api/embed/aa7cca3d6fa9c308fc659fa6e09af9a1910506c3.svg "Repobeats analytics image")
-
-Thanks to all the contributors!
-
-[![contributors](https://contrib.rocks/image?repo=youlaitech/vue3-element-admin)](https://github.com/youlaitech/vue3-element-admin/graphs/contributors)
-
-## G-Star
-
-![](https://foruda.gitee.com/images/1728577513089814203/95f2a70d_716974.jpeg)
-
-## 加群交流
-
-① 关注「有来技术」公众号，点击菜单 **交流群** 获取加群二维码（此举防止广告进群，感谢理解和支持）。
-
-② 直接添加微信 **`haoxianrui`** 备注「前端/后端/全栈」。
-
-![有来技术公众号](https://foruda.gitee.com/images/1737108820762592766/3390ed0d_716974.png)
+[MIT License](./LICENSE)
