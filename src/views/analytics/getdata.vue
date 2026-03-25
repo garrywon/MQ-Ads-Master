@@ -29,34 +29,6 @@
         />
         <el-button type="primary" :loading="testLoading" @click="handleTest">测试连接</el-button>
       </div>
-
-      <!-- 测试结果卡片 -->
-      <div
-        v-if="testResult"
-        class="test-result-card"
-        :class="{
-          success: testResult.status === 'success',
-          failure: testResult.status !== 'success',
-        }"
-      >
-        <div class="card-header">
-          <span class="platform-name">{{ testResult.platform }}</span>
-          <el-tag :type="testResult.status === 'success' ? 'success' : 'danger'" size="small">
-            {{ testResult.status === "success" ? "成功" : "失败" }}
-          </el-tag>
-        </div>
-        <div class="card-body">
-          <div class="info-row">
-            <span class="label">目标日期:</span>
-            <span class="value">{{ testResult.target_date }}</span>
-          </div>
-          <div class="info-row">
-            <span class="label">总记录数:</span>
-            <span class="value">{{ testResult.total_records }}</span>
-          </div>
-          <div class="message">{{ testResult.message }}</div>
-        </div>
-      </div>
     </div>
 
     <!-- 执行同步模块 -->
@@ -80,6 +52,11 @@
           collapse-tags-tooltip
           clearable
         >
+          <template #header>
+            <el-checkbox :model-value="isAllSelected" @change="toggleAllSelection">
+              全选
+            </el-checkbox>
+          </template>
           <el-option
             v-for="platform in platformOptions"
             :key="platform.value"
@@ -87,6 +64,7 @@
             :value="platform.value"
           />
         </el-select>
+        <el-input v-model="apiKey" placeholder="请输入 API Key" style="width: 200px" clearable />
         <el-button type="primary" :loading="syncLoading" @click="handleSync">测试同步</el-button>
       </div>
     </div>
@@ -143,7 +121,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { Search, Refresh } from "@element-plus/icons-vue";
 import { DebugAPI, ALLOWED_PLATFORMS } from "@/api/debug/getdata";
@@ -155,11 +133,24 @@ const testPlatform = ref(null); // 测试用的单个平台
 const syncDate = ref(null);
 const testLoading = ref(false);
 const syncLoading = ref(false);
-const testResult = ref(null); // 单个平台测试结果（对象）
 
 const platformOptions = ref([]);
 const platformLoading = ref(false);
 const selectedPlatforms = ref([]);
+const apiKey = ref("");
+
+const isAllSelected = computed(() => {
+  if (platformOptions.value.length === 0) return false;
+  return selectedPlatforms.value.length === platformOptions.value.length;
+});
+
+const toggleAllSelection = (val) => {
+  if (val) {
+    selectedPlatforms.value = platformOptions.value.map((p) => p.value);
+  } else {
+    selectedPlatforms.value = [];
+  }
+};
 
 // --- 日志查询数据 ---
 const logLoading = ref(false);
@@ -190,35 +181,18 @@ const initDates = () => {
 const loadPlatformOptions = async () => {
   platformLoading.value = true;
   try {
-    const response = await AnalysisAPI.getPlatformOptions("UA");
-
-    // 安全的平台映射，确保 value 是唯一的字符串
-    const mapPlatform = (p, idx) => {
-      let value;
-      let label;
-
-      if (typeof p === "string") {
-        value = `${p}_${idx}`;
-        label = p;
-      } else if (p && typeof p === "object") {
-        // 使用 name 字段作为平台代码（value基础）
-        const platformCode = p.name != null ? String(p.name) : String(p.id);
-        value = `${platformCode}_${idx}`;
-        // label 显示平台名称
-        label = p.name || p.code || String(p.id);
-      } else {
-        const str = String(p);
-        value = `${str}_${idx}`;
-        label = str;
-      }
-
-      return { value, label };
-    };
+    const response = await AnalysisAPI.getPlatformOptions();
 
     if (response && Array.isArray(response)) {
-      platformOptions.value = response.map((p, idx) => mapPlatform(p, idx));
+      platformOptions.value = response.map((p) => ({
+        value: p.name,
+        label: p.name,
+      }));
     } else if (response?.data) {
-      platformOptions.value = response.data.map((p, idx) => mapPlatform(p, idx));
+      platformOptions.value = response.data.map((p) => ({
+        value: p.name,
+        label: p.name,
+      }));
     } else {
       platformOptions.value = [];
     }
@@ -242,11 +216,15 @@ const handleTest = async () => {
   }
 
   testLoading.value = true;
-  testResult.value = null;
   try {
     const response = await DebugAPI.testConnection(testPlatform.value, testDate.value);
-    testResult.value = response;
-    ElMessage.success("测试完成");
+
+    ElNotification({
+      title: `${response.platform} - ${response.status === "success" ? "成功" : "失败"}`,
+      message: `目标日期: ${response.target_date}\n总记录数: ${response.total_records}\n${response.message || ""}`,
+      type: response.status === "success" ? "success" : "error",
+      duration: 0,
+    });
   } catch (error) {
     console.error("测试连接失败:", error);
     ElMessage.error("测试失败，请检查网络");
@@ -268,30 +246,25 @@ const handleSync = async () => {
 
   syncLoading.value = true;
   try {
-    // 提取原始平台代码（去除 _idx 后缀）
-    const rawPlatforms = selectedPlatforms.value.map((v) => {
-      // 如果有下划线，取下划线前的部分作为原始代码
-      const parts = v.split("_");
-      return parts.length > 1 ? parts[0] : v;
-    });
-
     // 调试日志
     console.log("=== 执行同步调试信息 ===");
-    console.log("selectedPlatforms (带后缀):", selectedPlatforms.value);
-    console.log("提取后的 rawPlatforms:", rawPlatforms);
+    console.log("selectedPlatforms:", selectedPlatforms.value);
     console.log("即将发送的请求体:", {
       business_type: "ALL",
-      platforms: rawPlatforms,
+      platforms: selectedPlatforms.value,
       target_date: syncDate.value,
     });
     console.log("========================");
 
     // 调用全量同步接口
-    const response = await DebugAPI.runFullSync({
-      business_type: "ALL",
-      platforms: rawPlatforms,
-      target_date: syncDate.value,
-    });
+    const response = await DebugAPI.runFullSync(
+      {
+        business_type: "ALL",
+        platforms: selectedPlatforms.value,
+        target_date: syncDate.value,
+      },
+      apiKey.value
+    );
 
     // 显示总体成功消息
     ElMessage.success(response.message || "同步任务已触发");
@@ -389,67 +362,6 @@ onMounted(() => {
       gap: 12px;
       align-items: center;
       margin-bottom: 20px;
-    }
-  }
-
-  // 测试连接单卡片
-  .test-result-card {
-    padding: 16px;
-    margin-top: 20px;
-    border: 1px solid var(--el-border-color-light, #ebeef5);
-    border-radius: 8px;
-    transition: all 0.3s;
-
-    &.success {
-      background: var(--el-color-success-light-9, #f0f9eb);
-      border-left: 4px solid var(--el-color-success, #67c23a);
-    }
-
-    &.failure {
-      background: var(--el-color-danger-light-9, #fef0f0);
-      border-left: 4px solid var(--el-color-danger, #f56c6c);
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-
-      .platform-name {
-        font-size: 16px;
-        font-weight: 600;
-        color: var(--el-text-color-primary, #303133);
-      }
-    }
-
-    .card-body {
-      .info-row {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: 8px;
-        font-size: 14px;
-
-        .label {
-          color: var(--el-text-color-regular, #606266);
-        }
-
-        .value {
-          font-weight: 500;
-          color: var(--el-text-color-primary, #303133);
-        }
-      }
-
-      .message {
-        padding: 10px;
-        margin-top: 12px;
-        font-size: 13px;
-        line-height: 1.5;
-        color: var(--el-text-color-regular, #606266);
-        word-break: break-all;
-        background: rgba(255, 255, 255, 0.7);
-        border-radius: 4px;
-      }
     }
   }
 

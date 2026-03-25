@@ -29,14 +29,12 @@ export const DebugAPI = {
    * @param {string} payload.target_date - 目标日期，格式 YYYY-MM-DD
    * @returns {Promise} 同步结果
    */
-  runFullSync(payload) {
+  runFullSync(payload, apiKey) {
     return request({
       url: `${DEBUG_BASE_URL}/system/tasks/run`,
       method: "post",
       data: payload,
-      headers: {
-        "x-api-key": "sdaef465ger2h53g54rf22hgf",
-      },
+      headers: apiKey ? { "x-api-key": apiKey } : {},
       customHandleResponse: true,
     });
   },

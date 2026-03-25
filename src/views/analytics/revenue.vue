@@ -402,7 +402,7 @@ const searchForm = ref({
   channelIds: [],
   gameIds: [],
   groupBy: ["report_date", "game_id", "channel_id"],
-  metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr", "fill_rate"],
+  metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr", "fill_rate", "ecpm"],
 });
 
 // 平台选项（从API动态获取）
@@ -437,6 +437,7 @@ const metricsOptions = [
   { value: "requests", label: "响应数" },
   { value: "fill_rate", label: "填充率" },
   { value: "ctr", label: "CTR" },
+  { value: "ecpm", label: "ECPM" },
 ];
 
 // 列拖拽相关
@@ -495,6 +496,7 @@ const cols = ref([
   { label: "响应数", align: "center", prop: "requests", minWidth: 128, sortable: true },
   { label: "填充率", align: "center", prop: "fill_rate", minWidth: 128, sortable: true },
   { label: "CTR", align: "center", prop: "ctr", minWidth: 128, sortable: true },
+  { label: "ECPM", align: "center", prop: "ecpm", minWidth: 128, sortable: true },
 ]);
 
 // 动态计算要显示的列（基于分组选择和指标选择，保持 cols 拖拽后的顺序）
@@ -530,7 +532,16 @@ const finalColumns = computed(() => {
   });
 
   // 添加指标列（根据选择的指标）
-  const metricProps = ["revenue", "impressions", "clicks", "fills", "requests", "fill_rate", "ctr"];
+  const metricProps = [
+    "revenue",
+    "impressions",
+    "clicks",
+    "fills",
+    "requests",
+    "fill_rate",
+    "ctr",
+    "ecpm",
+  ];
   metrics.forEach((prop) => {
     if (metricProps.includes(prop)) {
       activeProps.add(prop);
@@ -641,6 +652,7 @@ const numericColumns = [
   "requests",
   "ctr",
   "fill_rate",
+  "ecpm",
 ];
 
 // 判断是否为数值列
@@ -671,6 +683,7 @@ const formatSummaryValue = (prop) => {
     case "clicks":
     case "fills":
     case "requests":
+    case "ecpm":
       return formatNumber(sum);
     default:
       return "-"; // 包括 ctr、fill_rate 在内的非数值列都返回 "-"
@@ -723,7 +736,7 @@ const indexAction = async (params) => {
       metrics:
         params && params.metrics && params.metrics.length > 0
           ? params.metrics
-          : ["revenue", "impressions", "clicks", "fills", "requests", "ctr"],
+          : ["revenue", "impressions", "clicks", "fills", "requests", "ctr", "fill_rate", "ecpm"],
       // 分页参数 (可选)
       page: params && typeof params.pageNum === "number" ? params.pageNum : 1,
       size: params && typeof params.pageSize === "number" ? params.pageSize : 10,
@@ -772,6 +785,8 @@ const indexAction = async (params) => {
           fill_rate: calculatedFillRate,
           // 使用格式化后的CTR值
           ctr: formattedCTR,
+          // ECPM直接使用API返回的值
+          ecpm: item.ecpm || 0,
           // 保留原始数据以备后续使用，但不覆盖计算的字段
           ...Object.fromEntries(
             Object.entries(item).filter(
@@ -986,7 +1001,16 @@ const exitCardMode = async () => {
   // 恢复默认筛选条件
   searchForm.value.gameIds = [];
   searchForm.value.groupBy = ["report_date", "game_id", "channel_id"];
-  searchForm.value.metrics = ["revenue", "impressions", "clicks", "fills", "requests", "ctr"];
+  searchForm.value.metrics = [
+    "revenue",
+    "impressions",
+    "clicks",
+    "fills",
+    "requests",
+    "ctr",
+    "fill_rate",
+    "ecpm",
+  ];
   searchForm.value.date = [];
   // 切换到筛选模式
   viewMode.value = "filter";
@@ -1005,7 +1029,16 @@ const exitToFilterMode = async () => {
   // 恢复默认筛选条件
   searchForm.value.gameIds = [];
   searchForm.value.groupBy = ["report_date", "game_id", "channel_id"];
-  searchForm.value.metrics = ["revenue", "impressions", "clicks", "fills", "requests", "ctr"];
+  searchForm.value.metrics = [
+    "revenue",
+    "impressions",
+    "clicks",
+    "fills",
+    "requests",
+    "ctr",
+    "fill_rate",
+    "ecpm",
+  ];
   searchForm.value.date = [];
   // 切换到筛选模式
   viewMode.value = "filter";
@@ -1388,7 +1421,16 @@ const loadChartData = async (dateRange) => {
         business_type: "MON",
       },
       group_by: groupBy,
-      metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr"],
+      metrics: [
+        "revenue",
+        "impressions",
+        "clicks",
+        "fills",
+        "requests",
+        "ctr",
+        "fill_rate",
+        "ecpm",
+      ],
       page: 1,
       size: 100,
     };
@@ -1413,6 +1455,7 @@ const loadChartData = async (dateRange) => {
       requests: item.requests || 0,
       fill_rate: calculateFillRate(item),
       ctr: formatCTR(item),
+      ecpm: item.ecpm || 0,
       dateRange: [dateStart, dateEnd],
       ...Object.fromEntries(
         Object.entries(item).filter(
@@ -1474,7 +1517,7 @@ const handleReset = async () => {
     channelIds: [], // 重置为空（无默认筛选）
     gameIds: [], // 重置为空（无默认筛选）
     groupBy: ["report_date", "game_id", "channel_id"],
-    metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr", "fill_rate"],
+    metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr", "fill_rate", "ecpm"],
   };
   handleQueryClick();
 };

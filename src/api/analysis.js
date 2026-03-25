@@ -53,6 +53,15 @@ const AnalysisAPI = {
    * @param {string} type - 平台类型
    * @returns {Promise} 平台列表
    */
+  getPlatformOptions(type) {
+    return request({
+      url: `${ANALYSIS_BASE_URL}/analytics/options/platforms`,
+      method: "get",
+      params: type ? { type } : {},
+      customHandleResponse: true,
+    });
+  },
+
   getPlatformOptionsUA(type = "UA") {
     return request({
       url: `${ANALYSIS_BASE_URL}/analytics/options/platforms`,

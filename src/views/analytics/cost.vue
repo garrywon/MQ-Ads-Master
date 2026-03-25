@@ -427,7 +427,7 @@ const searchForm = ref({
   channelIds: [],
   gameIds: [],
   groupBy: ["report_date", "game_id", "channel_id"],
-  metrics: ["spend", "impressions", "clicks", "installs", "ctr", "cvr"],
+  metrics: ["spend", "impressions", "clicks", "installs", "ctr", "cvr", "cpm"],
 });
 
 // 平台选项（从API动态获取）
@@ -1017,7 +1017,7 @@ const exitCardMode = async () => {
   searchForm.value.channelIds = [];
   searchForm.value.gameIds = [];
   searchForm.value.groupBy = ["report_date", "game_id", "channel_id"];
-  searchForm.value.metrics = ["spend", "impressions", "clicks", "installs", "ctr"];
+  searchForm.value.metrics = ["spend", "impressions", "clicks", "installs", "ctr", "cvr", "cpm"];
   searchForm.value.date = [];
   // 切换到筛选模式
   viewMode.value = "filter";
@@ -1042,7 +1042,7 @@ const exitToFilterMode = async () => {
   searchForm.value.channelIds = [];
   searchForm.value.gameIds = [];
   searchForm.value.groupBy = ["report_date", "game_id", "channel_id"];
-  searchForm.value.metrics = ["spend", "impressions", "clicks", "installs", "ctr"];
+  searchForm.value.metrics = ["spend", "impressions", "clicks", "installs", "ctr", "cvr", "cpm"];
   searchForm.value.date = [];
   // 切换到筛选模式
   viewMode.value = "filter";
@@ -1504,7 +1504,7 @@ const handleReset = async () => {
     channelIds: [], // 重置为空（无默认筛选）
     gameIds: [], // 重置为空（无默认筛选）
     groupBy: ["report_date", "game_id", "channel_id"],
-    metrics: ["spend", "impressions", "clicks", "installs", "ctr", "cvr"],
+    metrics: ["spend", "impressions", "clicks", "installs", "ctr", "cvr", "cpm"],
   };
   handleQueryClick();
 };
