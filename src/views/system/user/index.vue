@@ -351,12 +351,12 @@ async function handleOpenDialog(id) {
     dialogState.title = "修改用户";
     dialogState.mode = DialogMode.EDIT;
     try {
-      const data = await UserAPI.getFormData(id);
-      // 字段转换：role_ids -> roleIds
-      if (data.role_ids) {
-        data.roleIds = data.role_ids;
-      }
-      Object.assign(formData, data);
+      const data = await UserAPI.getUserDetail(id);
+      formData.id = data.userId;
+      formData.username = data.username;
+      formData.nickname = data.nickname;
+      formData.status = data.status;
+      formData.roleIds = data.roles ? data.roles.map((r) => r.id) : [];
     } catch (error) {
       ElMessage.error("加载用户数据失败");
       console.error("加载用户数据失败:", error);

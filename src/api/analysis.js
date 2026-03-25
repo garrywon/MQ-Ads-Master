@@ -129,6 +129,7 @@ const AnalysisAPI = {
    * @returns {Promise} 平台列表
    */
   getPlatformsByChannel(type = "UA", channelId) {
+    console.log("[平台选项请求] type:", type, "channelId:", channelId);
     return request({
       url: `${ANALYSIS_BASE_URL}/analytics/options/platforms`,
       method: "get",

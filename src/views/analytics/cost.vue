@@ -225,6 +225,9 @@
                 <template v-else-if="col.slotName === 'spend'">
                   <el-text type="danger">{{ formatNumber(scope.row[col.prop]) }}</el-text>
                 </template>
+                <template v-else-if="col.slotName === 'count'">
+                  <span>{{ formatNumber(scope.row[col.prop], true) }}</span>
+                </template>
                 <template v-else-if="col.slotName === 'platform'">
                   <el-tag :type="getPlatformTag(scope.row[col.prop])">
                     {{ scope.row[col.prop] }}
@@ -314,6 +317,7 @@
       :view-mode="viewMode"
       :date-range="chartDateRange"
       :card-selection="cardSelection"
+      page-type="cost"
     />
 
     <!-- 图表展示模块 -->
@@ -323,6 +327,7 @@
         :table-data="tableData"
         :is-loading="loading"
         :chart-type="chartType"
+        :page-type="'cost'"
         :date-range="chartDateRange"
         :card-selection="cardSelection"
         :metric="chartMetric"
@@ -349,6 +354,7 @@
       :step-loading="stepLoading"
       :can-go-next="canGoNext"
       :loading="loading"
+      platform-type="UA"
       @exit="exitCardMode"
       @prev-step="prevStep"
       @next-step="nextStep"
@@ -426,7 +432,7 @@ const searchForm = ref({
   campaignNames: [],
   channelIds: [],
   gameIds: [],
-  groupBy: ["report_date", "game_id", "channel_id"],
+  groupBy: ["report_date"],
   metrics: ["spend", "impressions", "clicks", "installs", "ctr", "cvr", "cpm"],
 });
 
@@ -517,9 +523,30 @@ const cols = ref([
     slotName: "spend",
     sortable: true,
   },
-  { label: "展示数", align: "center", prop: "impressions", minWidth: 128, sortable: true },
-  { label: "点击数", align: "center", prop: "clicks", minWidth: 128, sortable: true },
-  { label: "激活数", align: "center", prop: "installs", minWidth: 128, sortable: true },
+  {
+    label: "展示数",
+    align: "center",
+    prop: "impressions",
+    minWidth: 128,
+    sortable: true,
+    slotName: "count",
+  },
+  {
+    label: "点击数",
+    align: "center",
+    prop: "clicks",
+    minWidth: 128,
+    sortable: true,
+    slotName: "count",
+  },
+  {
+    label: "激活数",
+    align: "center",
+    prop: "installs",
+    minWidth: 128,
+    sortable: true,
+    slotName: "count",
+  },
   { label: "CTR", align: "center", prop: "ctr", minWidth: 128, sortable: true },
   { label: "CVR", align: "center", prop: "cvr", minWidth: 128, sortable: true },
   { label: "CPM", align: "center", prop: "cpm", minWidth: 128, sortable: true },
@@ -656,10 +683,13 @@ const formatCTR = (item) => {
 };
 
 // 格式化数字为千分位
-const formatNumber = (num) => {
+const formatNumber = (num, isInteger = false) => {
   if (num === undefined || num === null || num === "") return "-";
   const number = Number(num);
   if (isNaN(number)) return "-";
+  if (isInteger) {
+    return Math.round(number).toLocaleString("en-US");
+  }
   return number.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -669,7 +699,7 @@ const formatNumber = (num) => {
 // ====== 总计行相关函数 ======
 
 // 数值列列表（需要统计的列）
-const numericColumns = ["spend", "impressions", "clicks", "installs", "ctr", "cvr", "cpm"];
+const numericColumns = ["spend", "impressions", "clicks", "installs", "ctr", "cvr"];
 
 // 判断是否为数值列
 const isNumericColumn = (prop) => {
@@ -699,16 +729,9 @@ const formatSummaryValue = (prop) => {
     case "impressions":
     case "clicks":
     case "installs":
-      return formatNumber(sum);
+      return formatNumber(sum, true);
     case "cpm":
-      if (sum > 0) {
-        const totalSpend = calculateColumnSum("spend");
-        const totalImpressions = calculateColumnSum("impressions");
-        if (totalImpressions > 0) {
-          return ((totalSpend / totalImpressions) * 1000).toFixed(2);
-        }
-      }
-      return "0.00";
+      return "-";
     default:
       return "-"; // 包括 ctr、cvr 在内的非数值列都返回 "-"
   }
@@ -1426,6 +1449,7 @@ const loadChartData = async (dateRange) => {
       page: 1,
       size: 100,
     };
+    console.log("[cost.vue] 刷新API请求参数:", JSON.stringify(apiParams));
 
     // 获取主体数据
     const response = await AnalysisAPI.queryAnalytics(apiParams);
@@ -1503,7 +1527,7 @@ const handleReset = async () => {
     platforms: searchForm.value.platforms, // 保持默认筛选（type=UA）
     channelIds: [], // 重置为空（无默认筛选）
     gameIds: [], // 重置为空（无默认筛选）
-    groupBy: ["report_date", "game_id", "channel_id"],
+    groupBy: ["report_date"],
     metrics: ["spend", "impressions", "clicks", "installs", "ctr", "cvr", "cpm"],
   };
   handleQueryClick();

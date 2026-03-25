@@ -34,10 +34,14 @@
           class="metric-radio"
           @change="handleMetricChange"
         >
-          <el-radio-button label="spend">花费</el-radio-button>
-          <el-radio-button label="impressions">展示数</el-radio-button>
-          <el-radio-button label="clicks">点击数</el-radio-button>
-          <el-radio-button label="installs">激活数</el-radio-button>
+          <el-radio-button :value="pageType === 'revenue' ? 'revenue' : 'spend'">
+            {{ pageType === "revenue" ? "收益" : "花费" }}
+          </el-radio-button>
+          <el-radio-button value="impressions">展示数</el-radio-button>
+          <el-radio-button value="clicks">点击数</el-radio-button>
+          <el-radio-button :value="pageType === 'revenue' ? 'requests' : 'installs'">
+            {{ pageType === "revenue" ? "响应数" : "激活数" }}
+          </el-radio-button>
         </el-radio-group>
 
         <el-select
@@ -110,7 +114,14 @@
 
         <!-- 数据列表 -->
         <div v-else class="chart-table">
-          <el-table :data="chartData" border stripe max-height="400">
+          <el-table
+            :data="chartData"
+            border
+            stripe
+            max-height="400"
+            show-summary
+            :summary-method="summaryMethod"
+          >
             <el-table-column type="index" label="序号" width="60" align="center" />
             <el-table-column prop="date" label="日期" align="center" min-width="120" />
             <el-table-column prop="gameName" label="游戏" align="center" min-width="120" />
@@ -122,9 +133,16 @@
                 <span v-else>-</span>
               </template>
             </el-table-column>
-            <el-table-column prop="spend" label="花费(¥)" align="center" min-width="120">
+            <el-table-column
+              prop="spend"
+              :label="pageType === 'revenue' ? '收益(¥)' : '花费(¥)'"
+              align="center"
+              min-width="120"
+            >
               <template #default="{ row }">
-                <span class="spend-value">¥{{ formatNumber(row.spend) }}</span>
+                <span :class="pageType === 'revenue' ? 'revenue-value' : 'spend-value'">
+                  ¥{{ formatNumber(row.spend) }}
+                </span>
               </template>
             </el-table-column>
             <el-table-column prop="impressions" label="展示数" align="center" min-width="100">
@@ -137,7 +155,12 @@
                 {{ formatNumber(row.clicks, true) }}
               </template>
             </el-table-column>
-            <el-table-column prop="installs" label="激活数" align="center" min-width="100">
+            <el-table-column
+              prop="installs"
+              :label="pageType === 'revenue' ? '响应数' : '激活数'"
+              align="center"
+              min-width="100"
+            >
               <template #default="{ row }">
                 {{ formatNumber(row.installs, true) }}
               </template>
@@ -152,7 +175,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import * as echarts from "echarts";
 import { TrendCharts, Histogram, List, Refresh, Loading } from "@element-plus/icons-vue";
 
@@ -168,6 +191,10 @@ const props = defineProps({
   chartType: {
     type: String,
     default: "line",
+  },
+  pageType: {
+    type: String,
+    default: "cost",
   },
   dateRange: {
     type: Array,
@@ -225,6 +252,8 @@ const localGame = ref(props.selectedGame);
 const chartData = ref([]);
 const loading = ref(false);
 
+const pageType = computed(() => props.pageType || "cost");
+
 let chartInstance = null;
 
 const formatNumber = (num, isInteger = false) => {
@@ -268,21 +297,11 @@ const handleRefresh = () => {
 };
 
 const handlePlatformChange = (value) => {
-  emit("update:selectedPlatform", value);
-  nextTick(() => {
-    if (chartData.value.length > 0) {
-      renderChart();
-    }
-  });
+  emit("update:selectedPlatform", value === undefined ? null : value);
 };
 
 const handleGameChange = (value) => {
-  emit("update:selectedGame", value);
-  nextTick(() => {
-    if (chartData.value.length > 0) {
-      renderChart();
-    }
-  });
+  emit("update:selectedGame", value === undefined ? null : value);
 };
 
 const calculateCTR = (item) => {
@@ -316,14 +335,14 @@ const processChartData = () => {
     return;
   }
 
+  const isRevenue = pageType.value === "revenue";
+
   const groupedData = {};
   props.tableData.forEach((item) => {
     const date = item.report_date || item.date || item.dateRange?.[0] || "";
-    // 如果没有游戏或平台，默认为一个特殊的字符串以防报错
     const gName = item.gameName || "-";
     const pName = item.platformName || item.platform_name || item.platform || item.name || "-";
 
-    // 使用日期、游戏和平台生成唯一的复合 Key
     const uniqueKey = `${date}_${gName}_${pName}`;
 
     if (!groupedData[uniqueKey]) {
@@ -337,10 +356,18 @@ const processChartData = () => {
         installs: 0,
       };
     }
-    groupedData[uniqueKey].spend += item.spend || 0;
-    groupedData[uniqueKey].impressions += item.impressions || 0;
-    groupedData[uniqueKey].clicks += item.clicks || 0;
-    groupedData[uniqueKey].installs += item.installs || 0;
+
+    if (isRevenue) {
+      groupedData[uniqueKey].spend += item.revenue || item.estimated_revenue || 0;
+      groupedData[uniqueKey].impressions += item.impressions || 0;
+      groupedData[uniqueKey].clicks += item.clicks || 0;
+      groupedData[uniqueKey].installs += item.requests || 0;
+    } else {
+      groupedData[uniqueKey].spend += item.spend || 0;
+      groupedData[uniqueKey].impressions += item.impressions || 0;
+      groupedData[uniqueKey].clicks += item.clicks || 0;
+      groupedData[uniqueKey].installs += item.installs || 0;
+    }
   });
 
   chartData.value = Object.values(groupedData).map((item) => ({
@@ -348,6 +375,42 @@ const processChartData = () => {
     ctr: calculateCTR(item),
     cvr: calculateCVR(item),
   }));
+};
+
+const summaryMethod = (param) => {
+  const { columns, data } = param;
+  const sums = [];
+  const isRevenue = pageType.value === "revenue";
+
+  const spendLabel = isRevenue ? "收益(¥)" : "花费(¥)";
+  const installsLabel = isRevenue ? "响应数" : "激活数";
+
+  columns.forEach((column, index) => {
+    if (index === 0) {
+      sums[index] = "合计";
+      return;
+    }
+
+    const prop = column.property;
+    if (!prop) {
+      sums[index] = "";
+      return;
+    }
+
+    if (prop === "spend") {
+      const total = data.reduce((sum, row) => sum + (row.spend || 0), 0);
+      sums[index] = `¥${formatNumber(total)}`;
+    } else if (prop === "impressions" || prop === "clicks" || prop === "installs") {
+      const total = data.reduce((sum, row) => sum + (row[prop] || 0), 0);
+      sums[index] = formatNumber(total, true);
+    } else if (prop === "ctr" || prop === "cvr") {
+      sums[index] = "";
+    } else {
+      sums[index] = "";
+    }
+  });
+
+  return sums;
 };
 
 const renderChart = () => {
@@ -359,24 +422,35 @@ const renderChart = () => {
 
   chartInstance = echarts.init(chartRef.value);
 
+  const isRevenue = pageType.value === "revenue";
+  let metricKey = localMetric.value;
+  if (isRevenue) {
+    if (localMetric.value === "revenue") metricKey = "spend";
+    if (localMetric.value === "requests") metricKey = "installs";
+  }
+
   const dates = chartData.value.map((item) => item.date);
-  const metricData = chartData.value.map((item) => item[localMetric.value] || 0);
+  const metricData = chartData.value.map((item) => item[metricKey] || 0);
 
   const metricLabels = {
-    spend: "花费",
+    spend: isRevenue ? "收益" : "花费",
+    revenue: isRevenue ? "收益" : "花费",
     impressions: "展示数",
     clicks: "点击数",
-    installs: "激活数",
+    installs: isRevenue ? "响应数" : "激活数",
+    requests: isRevenue ? "响应数" : "激活数",
   };
 
   const metricColors = {
-    spend: "#409EFF",
+    spend: isRevenue ? "#67C23A" : "#409EFF",
+    revenue: isRevenue ? "#67C23A" : "#409EFF",
     impressions: "#67C23A",
     clicks: "#E6A23C",
     installs: "#F56C6C",
+    requests: "#F56C6C",
   };
 
-  const isSpend = localMetric.value === "spend";
+  const isSpend = localMetric.value === "spend" || localMetric.value === "revenue";
 
   const option = {
     title: {
@@ -415,7 +489,7 @@ const renderChart = () => {
     yAxis: [
       {
         type: "value",
-        name: isSpend ? "花费(¥)" : "数量",
+        name: isSpend ? (pageType.value === "revenue" ? "收益(¥)" : "花费(¥)") : "数量",
         position: "left",
         axisLine: {
           show: true,
@@ -604,6 +678,10 @@ onUnmounted(() => {
   .spend-value {
     font-weight: 600;
     color: var(--el-color-danger);
+  }
+  .revenue-value {
+    font-weight: 600;
+    color: var(--el-color-success);
   }
 }
 </style>

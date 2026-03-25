@@ -3,75 +3,87 @@
     <!-- 页面标题 -->
     <div class="page-header">数据同步管理</div>
 
-    <!-- 测试连接模块 -->
-    <div class="section">
-      <div class="section-title">1. 测试连接</div>
-      <div class="form-row">
-        <el-select
-          v-model="testPlatform"
-          placeholder="选择平台"
-          :loading="platformLoading"
-          style="min-width: 200px"
-        >
-          <el-option
-            v-for="platform in allowedPlatforms"
-            :key="platform"
-            :label="platform"
-            :value="platform"
+    <!-- 顶部区域：测试连接和执行同步并排 -->
+    <div class="top-row">
+      <!-- 测试连接模块 -->
+      <div class="section section-inline section-test">
+        <div class="section-title">测试连接</div>
+        <div class="form-row">
+          <el-date-picker
+            v-model="testDate"
+            type="date"
+            placeholder="选择测试日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%"
           />
-        </el-select>
-        <el-date-picker
-          v-model="testDate"
-          type="date"
-          placeholder="选择测试日期"
-          format="YYYY-MM-DD"
-          value-format="YYYY-MM-DD"
-        />
-        <el-button type="primary" :loading="testLoading" @click="handleTest">测试连接</el-button>
+          <el-select
+            v-model="testPlatform"
+            placeholder="选择平台"
+            :loading="platformLoading"
+            style="width: 150px"
+          >
+            <el-option
+              v-for="platform in platformOptions"
+              :key="platform.value"
+              :label="platform.label"
+              :value="platform.value"
+            />
+          </el-select>
+          <el-button type="primary" :loading="testLoading" @click="handleTest">测试连接</el-button>
+        </div>
       </div>
-    </div>
 
-    <!-- 执行同步模块 -->
-    <div class="section">
-      <div class="section-title">2. 执行同步</div>
-      <div class="form-row">
-        <el-date-picker
-          v-model="syncDate"
-          type="date"
-          placeholder="选择同步日期"
-          format="YYYY-MM-DD"
-          value-format="YYYY-MM-DD"
-        />
-        <el-select
-          v-model="selectedPlatforms"
-          multiple
-          placeholder="请选择平台"
-          :loading="platformLoading"
-          style="min-width: 300px"
-          collapse-tags
-          collapse-tags-tooltip
-          clearable
-        >
-          <template #header>
-            <el-checkbox :model-value="isAllSelected" @change="toggleAllSelection">
-              全选
-            </el-checkbox>
-          </template>
-          <el-option
-            v-for="platform in platformOptions"
-            :key="platform.value"
-            :label="platform.label"
-            :value="platform.value"
+      <!-- 执行同步模块 -->
+      <div class="section section-inline section-sync">
+        <div class="section-title">执行同步</div>
+        <div class="form-row">
+          <el-radio-group v-model="syncMode">
+            <el-radio value="full">全平台同步</el-radio>
+            <el-radio value="incremental">单平台增量</el-radio>
+          </el-radio-group>
+        </div>
+        <div class="form-row">
+          <el-date-picker
+            v-model="syncDate"
+            type="date"
+            placeholder="选择同步日期"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 150px"
           />
-        </el-select>
-        <el-input v-model="apiKey" placeholder="请输入 API Key" style="width: 200px" clearable />
-        <el-button type="primary" :loading="syncLoading" @click="handleSync">测试同步</el-button>
+          <el-select
+            v-if="syncMode === 'incremental'"
+            v-model="selectedPlatforms"
+            multiple
+            placeholder="请选择平台"
+            :loading="platformLoading"
+            style="width: 200px"
+            collapse-tags
+            collapse-tags-tooltip
+            clearable
+          >
+            <template #header>
+              <el-checkbox :model-value="isAllSelected" @change="toggleAllSelection">
+                全选
+              </el-checkbox>
+            </template>
+            <el-option
+              v-for="platform in platformOptions"
+              :key="platform.value"
+              :label="platform.label"
+              :value="platform.value"
+            />
+          </el-select>
+          <el-input v-model="apiKey" placeholder="请输入 API Key" style="width: 200px" clearable />
+          <el-button type="primary" :loading="syncLoading" @click="handleSync">执行同步</el-button>
+        </div>
       </div>
     </div>
 
     <!-- 同步日志模块 -->
     <div class="section">
-      <div class="section-title">3. 同步日志</div>
+      <div class="section-title">同步日志</div>
       <div class="form-row" style="margin-bottom: 16px">
         <el-select
           v-model="logQuery.status"
@@ -124,13 +136,14 @@
 import { ref, reactive, onMounted, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { Search, Refresh } from "@element-plus/icons-vue";
-import { DebugAPI, ALLOWED_PLATFORMS } from "@/api/debug/getdata";
+import { DebugAPI } from "@/api/debug/getdata";
 import AnalysisAPI from "@/api/analysis";
 
 // --- 测试连接 & 执行同步数据 ---
 const testDate = ref(null);
 const testPlatform = ref(null); // 测试用的单个平台
 const syncDate = ref(null);
+const syncMode = ref("full");
 const testLoading = ref(false);
 const syncLoading = ref(false);
 
@@ -163,7 +176,6 @@ const logQuery = reactive({
 });
 
 // 允许测试的平台列表（从 API 模块导入，这里也可以直接使用）
-const allowedPlatforms = ALLOWED_PLATFORMS;
 
 // 设置默认日期 (确保日期选择器有初始值并格式化)
 const initDates = () => {
@@ -183,16 +195,16 @@ const loadPlatformOptions = async () => {
   try {
     const response = await AnalysisAPI.getPlatformOptions();
 
+    const processResponse = (data) => {
+      const names = data.map((p) => p.name);
+      const processed = processPlatforms(names);
+      return processed.map((name) => ({ value: name, label: name }));
+    };
+
     if (response && Array.isArray(response)) {
-      platformOptions.value = response.map((p) => ({
-        value: p.name,
-        label: p.name,
-      }));
+      platformOptions.value = processResponse(response);
     } else if (response?.data) {
-      platformOptions.value = response.data.map((p) => ({
-        value: p.name,
-        label: p.name,
-      }));
+      platformOptions.value = processResponse(response.data);
     } else {
       platformOptions.value = [];
     }
@@ -223,7 +235,7 @@ const handleTest = async () => {
       title: `${response.platform} - ${response.status === "success" ? "成功" : "失败"}`,
       message: `目标日期: ${response.target_date}\n总记录数: ${response.total_records}\n${response.message || ""}`,
       type: response.status === "success" ? "success" : "error",
-      duration: 0,
+      duration: 3000,
     });
   } catch (error) {
     console.error("测试连接失败:", error);
@@ -233,34 +245,55 @@ const handleTest = async () => {
   }
 };
 
+// 处理平台名称：提取下划线前的部分 + 去重
+const processPlatforms = (platformList) => {
+  const processed = platformList.map((v) => {
+    const parts = v.split("_");
+    return parts.length > 1 ? parts[0] : v;
+  });
+  return [...new Set(processed)];
+};
+
 // 执行同步（触发全量同步任务）
 const handleSync = async () => {
   if (!syncDate.value) {
     ElMessage.warning("请选择同步日期");
     return;
   }
-  if (selectedPlatforms.value.length === 0) {
+  if (syncMode.value === "incremental" && selectedPlatforms.value.length === 0) {
     ElMessage.warning("请至少选择一个平台");
     return;
   }
 
+  let platforms;
+  if (syncMode.value === "full") {
+    platforms = [];
+  } else if (selectedPlatforms.value.length === platformOptions.value.length) {
+    platforms = [];
+  } else {
+    platforms = selectedPlatforms.value;
+  }
+
   syncLoading.value = true;
   try {
-    // 调试日志
     console.log("=== 执行同步调试信息 ===");
+    console.log("syncMode:", syncMode.value);
     console.log("selectedPlatforms:", selectedPlatforms.value);
+    console.log(
+      "platformOptions:",
+      platformOptions.value.map((p) => p.value)
+    );
     console.log("即将发送的请求体:", {
       business_type: "ALL",
-      platforms: selectedPlatforms.value,
+      platforms: platforms,
       target_date: syncDate.value,
     });
     console.log("========================");
 
-    // 调用全量同步接口
     const response = await DebugAPI.runFullSync(
       {
         business_type: "ALL",
-        platforms: selectedPlatforms.value,
+        platforms: platforms,
         target_date: syncDate.value,
       },
       apiKey.value
@@ -341,6 +374,20 @@ onMounted(() => {
     color: var(--el-text-color-primary, #303133);
   }
 
+  .top-row {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+
+    .section-test {
+      flex: 3;
+    }
+
+    .section-sync {
+      flex: 7;
+    }
+  }
+
   .section {
     padding: 24px;
     margin-bottom: 24px;
@@ -361,7 +408,12 @@ onMounted(() => {
       display: flex;
       gap: 12px;
       align-items: center;
+      flex-wrap: wrap;
       margin-bottom: 20px;
+    }
+
+    .section-inline .form-row {
+      justify-content: center;
     }
   }
 

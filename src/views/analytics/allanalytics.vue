@@ -156,6 +156,11 @@
             <span v-else-if="col.prop === 'ecpm'">
               {{ formatNumber(scope.row[col.prop]) }}
             </span>
+            <span v-else-if="col.prop === 'profit'">
+              <el-text :type="scope.row[col.prop] >= 0 ? 'success' : 'danger'">
+                {{ formatNumber(scope.row[col.prop]) }}
+              </el-text>
+            </span>
             <span v-else-if="col.prop === 'spend'">
               <el-text type="danger">{{ formatNumber(scope.row[col.prop]) }}</el-text>
             </span>
@@ -240,7 +245,7 @@ const searchForm = ref({
   channelIds: [],
   uaPlatformIds: [],
   monPlatformIds: [],
-  groupBy: ["report_date", "channel_id", "game_id"],
+  groupBy: ["report_date"],
 });
 
 // 投放平台选项
@@ -296,6 +301,7 @@ const formatNumber = (num, isInteger = false) => {
 
 // 数值列列表（需要统计的列）
 const numericColumns = [
+  "profit",
   "spend",
   "installs",
   "uaImpressions",
@@ -339,6 +345,7 @@ const cols = ref([
     sortable: true,
     visible: true,
   },
+  { label: "利润", align: "center", prop: "profit", minWidth: 120, sortable: true, visible: true },
   { label: "花费", align: "center", prop: "spend", minWidth: 120, sortable: true, visible: true },
   {
     label: "投放-激活数",
@@ -458,12 +465,14 @@ const summaryMethod = (param) => {
       return prev + (isNaN(val) ? 0 : val);
     }, 0);
 
-    if (prop === "spend") {
+    if (prop === "profit") {
+      sums[index] = formatNumber(sum);
+    } else if (prop === "spend") {
       sums[index] = formatNumber(sum);
     } else if (prop === "monEstimatedRevenue") {
       sums[index] = formatNumber(sum);
     } else if (prop === "ecpm") {
-      sums[index] = formatNumber(sum);
+      sums[index] = "-";
     } else if (
       prop === "installs" ||
       prop === "uaImpressions" ||
@@ -528,6 +537,7 @@ const loadData = async () => {
       gameId: item.game_id || "",
       gameName: item.game_name || "",
       channelName: item.channel_name || "",
+      profit: (item.mon_estimated_revenue || 0) - (item.spend || 0),
       spend: item.spend || 0,
       installs: item.installs || 0,
       uaImpressions: item.ua_impressions || 0,
@@ -568,7 +578,7 @@ const handleReset = async () => {
     channelIds: [],
     uaPlatformIds: [],
     monPlatformIds: [],
-    groupBy: ["report_date", "channel_id", "game_id"],
+    groupBy: ["report_date"],
   };
   await loadData();
 };

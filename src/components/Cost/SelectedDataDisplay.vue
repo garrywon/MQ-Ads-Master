@@ -31,8 +31,10 @@
           <div class="detail-content">
             <div class="detail-stats">
               <div class="stat-item">
-                <div class="stat-value spend">¥{{ formatNumber(totalData.spend) }}</div>
-                <div class="stat-label">花费</div>
+                <div class="stat-value" :class="isRevenue ? 'revenue' : 'spend'">
+                  ¥{{ formatNumber(totalData.spend) }}
+                </div>
+                <div class="stat-label">{{ isRevenue ? "收益" : "花费" }}</div>
                 <!-- 进度条：未选择平台时显示占比 -->
                 <div
                   v-if="platformStats.length > 0 && !cardSelection.selectedPlatform"
@@ -41,13 +43,15 @@
                   <div
                     v-for="(platform, index) in platformStats"
                     :key="index"
-                    class="progress-segment"
-                    :style="{
-                      width: platform.spendPercent + '%',
-                      background: getPlatformColor(index),
-                    }"
+                    class="progress-item"
                   >
-                    <span class="progress-label">
+                    <el-progress
+                      :percentage="platform.spendPercent"
+                      :stroke-width="6"
+                      :show-text="false"
+                      :color="getPlatformColor(index)"
+                    />
+                    <span class="progress-text">
                       {{ platform.platformName }} {{ platform.spendPercent.toFixed(1) }}%
                     </span>
                   </div>
@@ -64,13 +68,15 @@
                   <div
                     v-for="(platform, index) in platformStats"
                     :key="index"
-                    class="progress-segment"
-                    :style="{
-                      width: platform.impressionsPercent + '%',
-                      background: getPlatformColor(index),
-                    }"
+                    class="progress-item"
                   >
-                    <span class="progress-label">
+                    <el-progress
+                      :percentage="platform.impressionsPercent"
+                      :stroke-width="6"
+                      :show-text="false"
+                      :color="getPlatformColor(index)"
+                    />
+                    <span class="progress-text">
                       {{ platform.platformName }} {{ platform.impressionsPercent.toFixed(1) }}%
                     </span>
                   </div>
@@ -87,13 +93,15 @@
                   <div
                     v-for="(platform, index) in platformStats"
                     :key="index"
-                    class="progress-segment"
-                    :style="{
-                      width: platform.clicksPercent + '%',
-                      background: getPlatformColor(index),
-                    }"
+                    class="progress-item"
                   >
-                    <span class="progress-label">
+                    <el-progress
+                      :percentage="platform.clicksPercent"
+                      :stroke-width="6"
+                      :show-text="false"
+                      :color="getPlatformColor(index)"
+                    />
+                    <span class="progress-text">
                       {{ platform.platformName }} {{ platform.clicksPercent.toFixed(1) }}%
                     </span>
                   </div>
@@ -101,7 +109,7 @@
               </div>
               <div class="stat-item">
                 <div class="stat-value">{{ formatNumber(totalData.installs, true) }}</div>
-                <div class="stat-label">激活数</div>
+                <div class="stat-label">{{ isRevenue ? "响应数" : "激活数" }}</div>
                 <!-- 进度条：未选择平台时显示占比 -->
                 <div
                   v-if="platformStats.length > 0 && !cardSelection.selectedPlatform"
@@ -110,13 +118,15 @@
                   <div
                     v-for="(platform, index) in platformStats"
                     :key="index"
-                    class="progress-segment"
-                    :style="{
-                      width: platform.installsPercent + '%',
-                      background: getPlatformColor(index),
-                    }"
+                    class="progress-item"
                   >
-                    <span class="progress-label">
+                    <el-progress
+                      :percentage="platform.installsPercent"
+                      :stroke-width="6"
+                      :show-text="false"
+                      :color="getPlatformColor(index)"
+                    />
+                    <span class="progress-text">
                       {{ platform.platformName }} {{ platform.installsPercent.toFixed(1) }}%
                     </span>
                   </div>
@@ -166,7 +176,13 @@ const props = defineProps({
     type: Object,
     default: () => ({}),
   },
+  pageType: {
+    type: String,
+    default: "cost",
+  },
 });
+
+const isRevenue = computed(() => props.pageType === "revenue");
 
 const displayInfo = computed(() => {
   const { selectionMode, selectedGame, selectedGameName, selectedPlatform, selectedPlatformName } =
@@ -223,16 +239,17 @@ const totalData = computed(() => {
     };
   }
 
+  const isRev = isRevenue.value;
   let totalSpend = 0;
   let totalImpressions = 0;
   let totalClicks = 0;
   let totalInstalls = 0;
 
   props.tableData.forEach((item) => {
-    totalSpend += item.spend || 0;
+    totalSpend += isRev ? item.revenue || item.estimated_revenue || 0 : item.spend || 0;
     totalImpressions += item.impressions || 0;
     totalClicks += item.clicks || 0;
-    totalInstalls += item.installs || 0;
+    totalInstalls += isRev ? item.requests || 0 : item.installs || 0;
   });
 
   const ctr =
@@ -255,6 +272,7 @@ const platformStats = computed(() => {
     return [];
   }
 
+  const isRev = isRevenue.value;
   const statsMap = {};
 
   // 遍历单独获取的平台分解数据
@@ -272,10 +290,10 @@ const platformStats = computed(() => {
           installs: 0,
         };
       }
-      statsMap[name].spend += item.spend || 0;
+      statsMap[name].spend += isRev ? item.revenue || item.estimated_revenue || 0 : item.spend || 0;
       statsMap[name].impressions += item.impressions || 0;
       statsMap[name].clicks += item.clicks || 0;
-      statsMap[name].installs += item.installs || 0;
+      statsMap[name].installs += isRev ? item.requests || 0 : item.installs || 0;
     }
   });
 
@@ -498,6 +516,10 @@ const formatDateRange = (dateRange) => {
       &.spend {
         color: var(--el-color-danger);
       }
+
+      &.revenue {
+        color: var(--el-color-success);
+      }
     }
 
     .stat-label {
@@ -507,59 +529,24 @@ const formatDateRange = (dateRange) => {
 
     .stat-progress {
       display: flex;
-      flex-direction: row;
-      gap: 0;
-      height: 24px;
-      padding: 0;
+      flex-direction: column;
+      gap: 4px;
       margin-top: 8px;
-      overflow: hidden;
-      background: var(--el-fill-color-light);
-      border-radius: 6px;
 
-      .progress-segment {
-        position: relative;
+      .progress-item {
         display: flex;
         align-items: center;
-        justify-content: center;
-        height: 100%;
-        border-radius: 0;
-        transition: all 0.3s ease;
+        gap: 8px;
 
-        &:first-child {
-          border-radius: 6px 0 0 6px;
+        .el-progress {
+          flex: 1;
         }
+      }
 
-        &:last-child {
-          border-radius: 0 6px 6px 0;
-        }
-
-        &::after {
-          position: absolute;
-          top: 0;
-          right: 0;
-          bottom: 0;
-          left: 0;
-          content: "";
-          background: linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0.1) 0%,
-            rgba(255, 255, 255, 0.2) 50%,
-            rgba(255, 255, 255, 0.1) 100%
-          );
-        }
-
-        .progress-label {
-          z-index: 1;
-          max-width: 100%;
-          padding: 0 4px;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          font-size: 11px;
-          font-weight: 500;
-          color: white;
-          white-space: nowrap;
-          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-        }
+      .progress-text {
+        font-size: 10px;
+        color: var(--el-text-color-secondary);
+        white-space: nowrap;
       }
     }
   }

@@ -367,6 +367,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  platformType: {
+    type: String,
+    default: "UA",
+  },
 });
 
 const emit = defineEmits([

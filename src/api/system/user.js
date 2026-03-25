@@ -251,6 +251,32 @@ const UserAPI = {
       method: "get",
     });
   },
+
+  /**
+   * 获取用户详情
+   * @param {number} userId 用户ID
+   * @returns {Promise} 用户详情
+   */
+  getUserDetail(userId) {
+    return request({
+      url: `${USER_BASE_URL}/detail`,
+      method: "post",
+      data: { user_id: userId },
+    });
+  },
+
+  /**
+   * 修改当前用户密码
+   * @param {Object} data 密码信息 { oldPassword, newPassword }
+   * @returns {Promise} 修改结果
+   */
+  changeMyPassword(data) {
+    return request({
+      url: `${USER_BASE_URL}/me/password`,
+      method: "put",
+      data: { old_password: data.oldPassword, new_password: data.newPassword },
+    });
+  },
 };
 
 export default UserAPI;

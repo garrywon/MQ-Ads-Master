@@ -201,8 +201,11 @@
               <template v-else-if="col.slotName === 'revenue'">
                 <el-text type="success">{{ formatNumber(scope.row[col.prop]) }}</el-text>
               </template>
+              <template v-else-if="col.slotName === 'count'">
+                <span>{{ formatNumber(scope.row[col.prop], true) }}</span>
+              </template>
               <template v-else-if="col.slotName === 'requests'">
-                <el-text>{{ formatNumber(scope.row[col.prop]) }}</el-text>
+                <el-text>{{ formatNumber(scope.row[col.prop], true) }}</el-text>
               </template>
               <template v-else-if="col.slotName === 'platform'">
                 <el-tag :type="getPlatformTag(scope.row[col.prop])">
@@ -292,6 +295,7 @@
       :view-mode="viewMode"
       :date-range="chartDateRange"
       :card-selection="cardSelection"
+      page-type="revenue"
     />
 
     <!-- 图表展示模块 -->
@@ -300,6 +304,7 @@
       :table-data="tableData"
       :is-loading="loading"
       :chart-type="chartType"
+      :page-type="'revenue'"
       :date-range="chartDateRange"
       :card-selection="cardSelection"
       :metric="chartMetric"
@@ -325,6 +330,7 @@
       :step-loading="stepLoading"
       :can-go-next="canGoNext"
       :loading="loading"
+      platform-type="MON"
       @exit="exitCardMode"
       @prev-step="prevStep"
       @next-step="nextStep"
@@ -401,7 +407,7 @@ const searchForm = ref({
   platforms: [],
   channelIds: [],
   gameIds: [],
-  groupBy: ["report_date", "game_id", "channel_id"],
+  groupBy: ["report_date"],
   metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr", "fill_rate", "ecpm"],
 });
 
@@ -490,10 +496,38 @@ const cols = ref([
     slotName: "revenue",
     sortable: true,
   },
-  { label: "展示数", align: "center", prop: "impressions", minWidth: 128, sortable: true },
-  { label: "点击数", align: "center", prop: "clicks", minWidth: 128, sortable: true },
-  { label: "填充数", align: "center", prop: "fills", minWidth: 128, sortable: true },
-  { label: "响应数", align: "center", prop: "requests", minWidth: 128, sortable: true },
+  {
+    label: "展示数",
+    align: "center",
+    prop: "impressions",
+    minWidth: 128,
+    sortable: true,
+    slotName: "count",
+  },
+  {
+    label: "点击数",
+    align: "center",
+    prop: "clicks",
+    minWidth: 128,
+    sortable: true,
+    slotName: "count",
+  },
+  {
+    label: "填充数",
+    align: "center",
+    prop: "fills",
+    minWidth: 128,
+    sortable: true,
+    slotName: "count",
+  },
+  {
+    label: "响应数",
+    align: "center",
+    prop: "requests",
+    minWidth: 128,
+    sortable: true,
+    slotName: "count",
+  },
   { label: "填充率", align: "center", prop: "fill_rate", minWidth: 128, sortable: true },
   { label: "CTR", align: "center", prop: "ctr", minWidth: 128, sortable: true },
   { label: "ECPM", align: "center", prop: "ecpm", minWidth: 128, sortable: true },
@@ -631,10 +665,13 @@ const formatCTR = (item) => {
 };
 
 // 格式化数字为千分位
-const formatNumber = (num) => {
+const formatNumber = (num, isInteger = false) => {
   if (num === undefined || num === null || num === "") return "-";
   const number = Number(num);
   if (isNaN(number)) return "-";
+  if (isInteger) {
+    return Math.round(number).toLocaleString("en-US");
+  }
   return number.toLocaleString("en-US", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -652,7 +689,6 @@ const numericColumns = [
   "requests",
   "ctr",
   "fill_rate",
-  "ecpm",
 ];
 
 // 判断是否为数值列
@@ -679,12 +715,14 @@ const formatSummaryValue = (prop) => {
 
   switch (prop) {
     case "revenue":
+      return formatNumber(sum);
     case "impressions":
     case "clicks":
     case "fills":
     case "requests":
+      return formatNumber(sum, true);
     case "ecpm":
-      return formatNumber(sum);
+      return "-";
     default:
       return "-"; // 包括 ctr、fill_rate 在内的非数值列都返回 "-"
   }
@@ -1516,7 +1554,7 @@ const handleReset = async () => {
     platforms: searchForm.value.platforms, // 保持默认筛选（type=MON）
     channelIds: [], // 重置为空（无默认筛选）
     gameIds: [], // 重置为空（无默认筛选）
-    groupBy: ["report_date", "game_id", "channel_id"],
+    groupBy: ["report_date"],
     metrics: ["revenue", "impressions", "clicks", "fills", "requests", "ctr", "fill_rate", "ecpm"],
   };
   handleQueryClick();
